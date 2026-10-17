@@ -1,0 +1,106 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "devin-desktop"
+name = "Devin Desktop"
+vendor = "Cognition"
+kind = "ide"
+status = "active"
+application = "Devin Desktop (formerly Windsurf)"
+hints.show = "Cascade → Customizations → Rules"
+shows_loaded = "The Rules panel (Customizations icon in Cascade, or Devin - Settings); system rules carry a “System” label"
+
+[detect]
+paths = ["~/.codeium/windsurf", "~/.devin", "~/.config/Windsurf", "~/.config/Devin"]
+binaries = ["windsurf", "devin"]
+
+[budget]
+amount = 12000
+unit = "chars"
+scope = "file"
+on_overflow = "undocumented"
+[budget.source]
+kind = "documentation"
+url = "https://docs.devin.ai/desktop/cascade/memories"
+read_on = 2026-10-17
+quote = "Workspace rule files are limited to 12,000 characters each. The global rules file is limited to 6,000 characters."
+note = "what happens past the limit (truncated, rejected) is not documented"
+
+[composition]
+text = "The global rules file (always on), then the workspace rules by activation mode (always_on in every prompt; glob when a matching file is touched; model_decision by its description; manual only when @-mentioned); AGENTS.md through the same engine, root always on, subdirectories as glob rules."
+[composition.source]
+kind = "documentation"
+url = "https://docs.devin.ai/desktop/cascade/memories"
+read_on = 2026-10-17
+quote = "always_on: Full rule content is included in the system prompt on every message."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 0
+max_file_chars = 6000
+path.any = "~/.codeium/windsurf/memories/global_rules.md"
+[locations.source]
+kind = "documentation"
+url = "https://docs.devin.ai/desktop/cascade/memories"
+read_on = 2026-10-17
+quote = "~/.codeium/windsurf/memories/global_rules.md — Single file, applied across all workspaces. Always on. Limited to 6,000 characters."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 10
+nested = "conditional"
+path.any = ".devin/rules/*.md"
+frontmatter = { fields = ["trigger", "globs", "description"], glob_fields = ["globs"], always_when = ["trigger=always_on"], conditional_when = ["trigger=glob", "trigger=model_decision", "trigger=manual"] }
+[locations.source]
+kind = "documentation"
+url = "https://docs.devin.ai/desktop/cascade/memories"
+read_on = 2026-10-17
+quote = ".devin/rules/*.md (preferred) or .windsurf/rules/*.md (fallback) — One file per rule, each with its own activation mode. Limited to 12,000 characters per file."
+note = "discovered in the workspace directory, any sub-directory, and parents up to the git root; .devin/ takes precedence over .windsurf/"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 11
+nested = "conditional"
+path.any = ".windsurf/rules/*.md"
+only_if_absent = [".devin/rules/*.md"]
+frontmatter = { fields = ["trigger", "globs", "description"], glob_fields = ["globs"], always_when = ["trigger=always_on"], conditional_when = ["trigger=glob", "trigger=model_decision", "trigger=manual"] }
+[locations.source]
+kind = "documentation"
+url = "https://docs.devin.ai/desktop/cascade/memories"
+read_on = 2026-10-17
+quote = "(.devin/ is preferred and takes precedence over .windsurf/)"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 12
+legacy = true
+replaced_by = ".devin/rules/<name>.md"
+path.any = ".windsurfrules"
+[locations.source]
+kind = "documentation"
+url = "https://docs.devin.ai/desktop/cascade/memories"
+read_on = 2026-10-17
+quote = "The legacy single-file .windsurfrules at the workspace root is also still read."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 13
+nested = "conditional"
+path.any = ["AGENTS.md", "agents.md"]
+[locations.source]
+kind = "documentation"
+url = "https://docs.devin.ai/desktop/cascade/agents-md"
+read_on = 2026-10-17
+quote = "Case insensitive: Both AGENTS.md and agents.md are recognized"
+note = "root-level = always-on, subdirectory = auto-glob for that directory (<directory>/**); parents searched up to the git root"

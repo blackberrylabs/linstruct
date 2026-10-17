@@ -1,0 +1,124 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "codex"
+name = "Codex CLI"
+vendor = "OpenAI"
+kind = "cli"
+status = "active"
+hints.show = "codex, then /status (row “Agents.md”)"
+shows_loaded = "The `/status` card has an “Agents.md” row listing the files; `codex -c log_dir=./.codex-log` writes the tracing log where the truncation warning appears"
+skips_empty = true
+
+[detect]
+paths = ["~/.codex"]
+binaries = ["codex"]
+
+[budget]
+amount = 32768
+unit = "bytes"
+scope = "total"
+on_overflow = "cut"
+[budget.source]
+kind = "source-code"
+url = "https://github.com/openai/codex/blob/main/codex-rs/core/src/agents_md.rs"
+read_on = 2026-10-17
+quote = "if size > remaining { data.truncate(remaining as usize); } … tracing::warn!(… \"project doc exceeds remaining budget; truncating\")"
+note = "default 32768 in codex-rs/config/defaults.toml (`project_doc_max_bytes`); the boundary file is cut mid-content, later files skipped, the only signal is a tracing log line; the user-level file is not counted (commit ce0323f)"
+
+[composition]
+text = "From the project root down to the working directory, one file per directory (AGENTS.override.md, then AGENTS.md, then project_doc_fallback_filenames), concatenated root first and joined by blank lines; the user-level file comes first."
+[composition.source]
+kind = "documentation"
+url = "https://learn.chatgpt.com/docs/agent-configuration/agents-md.md"
+read_on = 2026-10-17
+quote = "Codex concatenates files from the root down, joining them with blank lines. Files closer to your current directory override earlier guidance because they appear later in the combined prompt."
+
+# ---- user: AGENTS.override.md else AGENTS.md, first non-empty; not counted in the budget --
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "override"
+order = 0
+counts_in_budget = false
+path.any = "~/.codex/AGENTS.override.md"
+[locations.source]
+kind = "documentation"
+url = "https://learn.chatgpt.com/docs/agent-configuration/agents-md.md"
+read_on = 2026-10-17
+quote = "In your Codex home directory (defaults to ~/.codex, unless you set CODEX_HOME), Codex reads AGENTS.override.md if it exists. Otherwise, Codex reads AGENTS.md."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 1
+counts_in_budget = false
+path.any = "~/.codex/AGENTS.md"
+only_if_absent = ["~/.codex/AGENTS.override.md"]
+[locations.source]
+kind = "documentation"
+url = "https://learn.chatgpt.com/docs/agent-configuration/agents-md.md"
+read_on = 2026-10-17
+quote = "Codex uses only the first non-empty file at this level."
+
+# The budget and the extra names come from the user's config.toml.
+[[locations]]
+scope = "user"
+format = "toml"
+kind = "config"
+order = 2
+path.any = "~/.codex/config.toml"
+config = { budget_key = "project_doc_max_bytes", fallback_key = "project_doc_fallback_filenames" }
+[locations.source]
+kind = "source-code"
+url = "https://github.com/openai/codex/blob/main/codex-rs/config/defaults.toml"
+read_on = 2026-10-17
+quote = "project_doc_max_bytes = 32768 … project_doc_fallback_filenames = []"
+
+# ---- project: one file per directory, root → cwd ----------------------------------------
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "override"
+order = 10
+nested = "when-cwd"
+path.any = "AGENTS.override.md"
+[locations.source]
+kind = "documentation"
+url = "https://learn.chatgpt.com/docs/agent-configuration/agents-md.md"
+read_on = 2026-10-17
+quote = "In each directory along the path, it checks for AGENTS.override.md, then AGENTS.md, then any fallback names in project_doc_fallback_filenames. Codex includes at most one file per directory."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 11
+nested = "when-cwd"
+path.any = "AGENTS.md"
+only_if_absent = ["AGENTS.override.md"]
+note = "Subdirectory files load only when Codex is started in that directory: the chain is built once, root → cwd."
+[locations.source]
+kind = "documentation"
+url = "https://learn.chatgpt.com/docs/agent-configuration/agents-md.md"
+read_on = 2026-10-17
+quote = "Starting at the project root (typically the Git root), Codex walks down to your current working directory."
+
+# ---- never read --------------------------------------------------------------------------
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "ignored"
+order = 90
+path.any = ["CLAUDE.md", ".claude/CLAUDE.md", "CLAUDE.local.md"]
+note = "Codex reads CLAUDE.md only when it is listed in project_doc_fallback_filenames; by default the list is empty."
+replaced_by = "AGENTS.md"
+[locations.source]
+kind = "documentation"
+url = "https://learn.chatgpt.com/docs/agent-configuration/agents-md.md"
+read_on = 2026-10-17
+quote = "Filenames not on this list are ignored for instruction discovery."

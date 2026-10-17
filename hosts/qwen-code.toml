@@ -1,0 +1,107 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "qwen-code"
+name = "Qwen Code"
+vendor = "Alibaba"
+kind = "cli"
+status = "active"
+hints.show = "qwen, then /memory and /context detail"
+shows_loaded = "`/memory` opens the Memory Manager listing the loaded files; `/context detail` names each context file; the footer counts them"
+
+[detect]
+paths = ["~/.qwen"]
+binaries = ["qwen"]
+
+[composition]
+text = "Global file, then the ancestors root to leaf (QWEN.md and AGENTS.md both), then the extensions' files, then .qwen/QWEN.local.md last; each wrapped in `--- Context from: <path> ---`."
+[composition.source]
+kind = "documentation"
+url = "https://github.com/QwenLM/qwen-code/blob/main/docs/users/configuration/settings.md"
+read_on = 2026-10-17
+quote = "Content from files lower in this list (more specific) typically overrides or supplements content from files higher up (more general). The exact concatenation order and final context can be inspected from the /memory dialog."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 0
+path.any = "~/.qwen/QWEN.md"
+imports = { syntax = "@", depth = 5, relative_to = "file" }
+[locations.source]
+kind = "documentation"
+url = "https://qwenlm.github.io/qwen-code-docs/en/users/features/memory/"
+read_on = 2026-10-17
+quote = "~/.qwen/QWEN.md | You, across all your projects"
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "rules"
+order = 1
+strips_html_comments = true
+path.any = "~/.qwen/rules/**/*.md"
+frontmatter = { fields = ["paths"], glob_fields = ["paths"], conditional_when = ["paths"] }
+[locations.source]
+kind = "documentation"
+url = "https://qwenlm.github.io/qwen-code-docs/en/users/features/rules/"
+read_on = 2026-10-17
+quote = "Every .md file under those directories is discovered, including in subdirectories, in a deterministic order."
+note = "HTML comments are stripped from a rule's body before it is sent"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 10
+path.any = ["QWEN.md", "AGENTS.md"]
+imports = { syntax = "@", depth = 5, relative_to = "file" }
+[locations.source]
+kind = "documentation"
+url = "https://qwenlm.github.io/qwen-code-docs/en/users/features/memory/"
+read_on = 2026-10-17
+quote = "If your repository already has an AGENTS.md file for other AI tools, Qwen reads that too."
+note = "memory-constants.ts:33-36: defaults to both QWEN.md and AGENTS.md; no downward scan of subdirectories exists (3547398d)"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "local"
+order = 11
+path.any = ".qwen/QWEN.local.md"
+imports = { syntax = "@", depth = 5, relative_to = "file" }
+[locations.source]
+kind = "documentation"
+url = "https://qwenlm.github.io/qwen-code-docs/en/users/features/memory/"
+read_on = 2026-10-17
+quote = "It loads after the shared project QWEN.md, so your local instructions can supplement or override the team's."
+note = "loaded from one fixed slot at the git root only (memoryDiscovery.ts:546-557)"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 12
+strips_html_comments = true
+path.any = ".qwen/rules/**/*.md"
+frontmatter = { fields = ["paths"], glob_fields = ["paths"], conditional_when = ["paths"] }
+[locations.source]
+kind = "documentation"
+url = "https://qwenlm.github.io/qwen-code-docs/en/users/features/rules/"
+read_on = 2026-10-17
+quote = "Rules live in .qwen/rules/"
+note = "project rules are read when the workspace is trusted"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "ignored"
+order = 90
+path.any = "QWEN.local.md"
+note = "Qwen Code reads the local file at .qwen/QWEN.local.md, not at the project root."
+replaced_by = ".qwen/QWEN.local.md"
+[locations.source]
+kind = "documentation"
+url = "https://qwenlm.github.io/qwen-code-docs/en/users/features/memory/"
+read_on = 2026-10-17
+quote = ".qwen/QWEN.local.md | Only you, only in this project (keep out of git)"

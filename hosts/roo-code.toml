@@ -1,0 +1,119 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "roo-code"
+name = "Roo Code"
+vendor = "Roo Code Inc."
+kind = "extension"
+status = "active"
+hints.show = "Prompts tab → Preview System Prompt"
+shows_loaded = "No command lists the loaded files; the Prompts tab's system-prompt preview includes the rules section"
+skips_empty = true
+
+[detect]
+paths = ["~/.roo", "~/.vscode/extensions/rooveterinaryinc.roo-cline*"]
+
+[composition]
+text = "Global rules first, then workspace rules; within each level mode-specific rules before general ones; files recursively, in alphabetical order of file name, each under `# Rules from <path>:`; legacy single files only when the directories are empty."
+[composition.source]
+kind = "documentation"
+url = "https://roocodeinc.github.io/Roo-Code/features/custom-instructions/"
+read_on = 2026-10-17
+quote = "Rules are loaded in order: Global rules first, then workspace rules. … Within each level, mode-specific rules are loaded before general rules."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "rules"
+order = 0
+path.any = ["~/.roo/rules/**/*", "~/.roo/rules-*/**/*"]
+[locations.source]
+kind = "documentation"
+url = "https://roocodeinc.github.io/Roo-Code/features/custom-instructions/"
+read_on = 2026-10-17
+quote = "~/.roo/rules/ and ~/.roo/rules-{modeSlug}/"
+note = "any text file; cache and temporary files (*.tmp, *.log, *.lock, .DS_Store…) are excluded by the host; the location cannot be customised"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 10
+path.any = [".roo/rules/**/*", ".roo/rules-*/**/*"]
+[locations.source]
+kind = "documentation"
+url = "https://roocodeinc.github.io/Roo-Code/features/custom-instructions/"
+read_on = 2026-10-17
+quote = "Preferred Method: Directory (.roo/rules/)"
+note = "subfolder .roo/rules are read only with “Enable subfolder rules”, off by default (Task.ts:3697)"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 11
+legacy = true
+replaced_by = ".roo/rules/<name>.md"
+path.any = [".roorules", ".roorules-*"]
+only_if_absent = [".roo/rules/*"]
+[locations.source]
+kind = "documentation"
+url = "https://roocodeinc.github.io/Roo-Code/features/custom-instructions/"
+read_on = 2026-10-17
+quote = "If .roo/rules/ doesn't exist or is empty, Roo Code looks for a single .roorules file in the workspace root."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 12
+legacy = true
+dir_ok = true
+replaced_by = ".roo/rules/<name>.md"
+path.any = [".clinerules", ".clinerules-*"]
+only_if_absent = [".roo/rules/*", ".roorules"]
+[locations.source]
+kind = "source-code"
+url = "https://github.com/RooCodeInc/Roo-Code/blob/main/src/core/prompts/sections/custom-instructions.ts"
+read_on = 2026-10-17
+quote = "const ruleFiles = [\".roorules\", \".clinerules\"]"
+note = "first non-empty wins (L229); docs: “Legacy Files (workspace root .roorules, .clinerules) - used only if no generic rules directory content was loaded”"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 13
+path.any = "AGENTS.md"
+[locations.source]
+kind = "documentation"
+url = "https://roocodeinc.github.io/Roo-Code/features/custom-instructions/"
+read_on = 2026-10-17
+quote = "Must be in the workspace root directory … Automatically loaded by default."
+note = "disabled with \"roo-cline.useAgentRules\": false; AGENT.md is read when AGENTS.md is absent"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 14
+path.any = "AGENT.md"
+only_if_absent = ["AGENTS.md"]
+[locations.source]
+kind = "documentation"
+url = "https://roocodeinc.github.io/Roo-Code/features/custom-instructions/"
+read_on = 2026-10-17
+quote = "If both exist, AGENTS.md is preferred over AGENT.md"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "local"
+order = 15
+path.any = "AGENTS.local.md"
+[locations.source]
+kind = "source-code"
+url = "https://github.com/RooCodeInc/Roo-Code/blob/main/src/core/prompts/sections/custom-instructions.ts"
+read_on = 2026-10-17
+quote = "AGENTS.local.md"
+note = "L318-320, “for personal overrides”; not in the documentation"

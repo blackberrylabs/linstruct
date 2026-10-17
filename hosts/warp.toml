@@ -1,0 +1,55 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "warp"
+name = "Warp"
+vendor = "Warp"
+kind = "terminal"
+status = "active"
+hints.show = "/open-project-rules; Settings > Agents > Knowledge > Manage Rules"
+shows_loaded = "Rules used in a conversation appear under References; Manage Rules lists the project rules files"
+
+[detect]
+paths = ["~/.config/warp-terminal", "~/.local/state/warp-terminal"]
+binaries = ["warp-terminal", "warp"]
+
+[composition]
+text = "The current subdirectory's rules file, then the repository root's, then the Global Rules of Warp Drive; the most specific wins."
+[composition.source]
+kind = "documentation"
+url = "https://docs.warp.dev/agents/capabilities/rules"
+read_on = 2026-10-17
+quote = "This ensures the most specific, project-relevant rules take priority over broader ones."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "override"
+order = 10
+nested = "on-demand"
+case_sensitive = true
+path.any = "WARP.md"
+legacy = true
+replaced_by = "AGENTS.md"
+[locations.source]
+kind = "documentation"
+url = "https://docs.warp.dev/agents/capabilities/rules"
+read_on = 2026-10-17
+quote = "If both WARP.md and AGENTS.md exist in the same directory, WARP.md takes priority."
+note = "kept for backwards compatibility; manually created files are reported as not discovered without /init or a git repository (warp #7472)"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 11
+nested = "on-demand"
+case_sensitive = true
+path.any = "AGENTS.md"
+only_if_absent = ["WARP.md"]
+[locations.source]
+kind = "documentation"
+url = "https://docs.warp.dev/agents/capabilities/rules"
+read_on = 2026-10-17
+quote = "The filename must be in all caps for Warp to recognize it (e.g., AGENTS.md, not agents.md or Agents.md)."
+note = "the repo root and the current directory are applied; other subdirectories on a best-effort basis when edited"

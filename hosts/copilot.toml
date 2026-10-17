@@ -1,0 +1,140 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "copilot"
+name = "GitHub Copilot"
+vendor = "GitHub"
+kind = "cli"
+status = "active"
+application = "GitHub Copilot (CLI and VS Code)"
+hints.show = "copilot, then /instructions"
+shows_loaded = "Copilot CLI: `/instructions` lists the discovered files and lets you enable or disable each; VS Code: expand References in a response, or “Chat: Open Customizations”"
+dedup_identical = true
+
+[detect]
+paths = ["~/.copilot", "~/.vscode/extensions/github.copilot-chat*"]
+binaries = ["copilot"]
+
+[composition]
+text = "Copilot CLI combines every discovered file, removes identical duplicates, and defines no precedence order between them; GitHub.com ranks Personal > Repository (path-specific > repository-wide > agent) > Organization."
+[composition.source]
+kind = "documentation"
+url = "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions"
+read_on = 2026-10-17
+quote = "Copilot CLI combines their instructions. It removes duplicate copies of identical user-level copilot-instructions.md, repository-wide, and agent instructions, but does not define a general precedence order between these files. Avoid conflicting instructions."
+
+# ---- user ---------------------------------------------------------------------------------
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 0
+path.any = "~/.copilot/copilot-instructions.md"
+imports = { syntax = "@", depth = 0, relative_to = "file", within_project = true }
+[locations.source]
+kind = "documentation"
+url = "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions"
+read_on = 2026-10-17
+quote = "$HOME/.copilot/copilot-instructions.md — User-level instructions that apply across repositories."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "rules"
+order = 1
+path.any = "~/.copilot/instructions/**/*.instructions.md"
+frontmatter = { fields = ["applyTo", "name", "description", "excludeAgent"], glob_fields = ["applyTo"], conditional_when = ["applyTo"] }
+[locations.source]
+kind = "documentation"
+url = "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions"
+read_on = 2026-10-17
+quote = "$HOME/.copilot/instructions/**/*.instructions.md — Modular user-level instructions."
+
+# ---- project ------------------------------------------------------------------------------
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 10
+path.any = ".github/copilot-instructions.md"
+imports = { syntax = "@", depth = 0, relative_to = "file", within_project = true }
+[locations.source]
+kind = "documentation"
+url = "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions"
+read_on = 2026-10-17
+quote = ".github/copilot-instructions.md — Repository-wide instructions, discovered in the standard locations."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 11
+path.any = ".github/instructions/**/*.instructions.md"
+frontmatter = { fields = ["applyTo", "name", "description", "excludeAgent"], glob_fields = ["applyTo"], conditional_when = ["applyTo"] }
+[locations.source]
+kind = "documentation"
+url = "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions"
+read_on = 2026-10-17
+quote = ".github/instructions/**/*.instructions.md — Modular repository instructions, discovered in the standard locations but not intermediate directories."
+note = "`@` references are not expanded in *.instructions.md files"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 12
+nested = "on-demand"
+path.any = "AGENTS.md"
+imports = { syntax = "@", depth = 0, relative_to = "file", within_project = true }
+[locations.source]
+kind = "documentation"
+url = "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions"
+read_on = 2026-10-17
+quote = "AGENTS.md — Agent instructions, discovered in the standard locations."
+note = "VS Code reads nested AGENTS.md only with chat.useNestedAgentsMdFiles, off by default"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 13
+nested = "on-demand"
+path.any = ["CLAUDE.md", ".claude/CLAUDE.md"]
+imports = { syntax = "@", depth = 0, relative_to = "file", within_project = true }
+[locations.source]
+kind = "documentation"
+url = "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions"
+read_on = 2026-10-17
+quote = "CLAUDE.md — Agent instructions, discovered in the standard locations. Copilot CLI also uses .claude/CLAUDE.md."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 14
+nested = "on-demand"
+path.any = "GEMINI.md"
+[locations.source]
+kind = "documentation"
+url = "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions"
+read_on = 2026-10-17
+quote = "GEMINI.md — Agent instructions, discovered in the standard locations."
+note = "File references are not expanded in GEMINI.md or *.instructions.md files."
+
+# ---- never read ---------------------------------------------------------------------------
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "ignored"
+order = 90
+path.any = ["copilot-instructions.md", ".copilot-instructions.md"]
+note = "Copilot looks for copilot-instructions.md inside .github/, not at the project root."
+replaced_by = ".github/copilot-instructions.md"
+[locations.source]
+kind = "documentation"
+url = "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions"
+read_on = 2026-10-17
+quote = "copilot-instructions.md file in the .github directory"

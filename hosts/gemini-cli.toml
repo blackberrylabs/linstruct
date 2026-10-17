@@ -1,0 +1,92 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "gemini-cli"
+name = "Gemini CLI"
+vendor = "Google"
+kind = "cli"
+status = "active"
+hints.show = "gemini, then /memory list and /memory show"
+shows_loaded = "`/memory list` prints the paths in use; `/memory show` the concatenated content; the footer counts the loaded context files"
+skips_empty = true
+
+[detect]
+paths = ["~/.gemini"]
+binaries = ["gemini"]
+
+[composition]
+text = "Global file, then the project root and its ancestors (root to leaf), then the extensions' files; each file wrapped in `--- Context from: <path> ---`; more specific files are meant to override or supplement the general ones."
+[composition.source]
+kind = "documentation"
+url = "https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/configuration.md"
+read_on = 2026-10-17
+quote = "Content from files lower in this list (more specific) typically overrides or supplements content from files higher up (more general). The exact concatenation order and final context can be inspected using the /memory show command."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 0
+path.any = "~/.gemini/GEMINI.md"
+imports = { syntax = "@", depth = 5, relative_to = "file" }
+[locations.source]
+kind = "documentation"
+url = "https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/configuration.md"
+read_on = 2026-10-17
+quote = "Location: ~/.gemini/<configured-context-filename> (for example, ~/.gemini/GEMINI.md in your user home directory)."
+
+# The accepted file names can be extended in settings.json (`context.fileName`, legacy `contextFileName`).
+[[locations]]
+scope = "user"
+format = "jsonc"
+kind = "config"
+order = 1
+path.any = "~/.gemini/settings.json"
+config = { fallback_key = "context.fileName", names_mode = "additional" }
+[locations.source]
+kind = "documentation"
+url = "https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/configuration.md"
+read_on = 2026-10-17
+quote = "context.fileName (string | string[]): … The name of the context file or files to load into memory. Accepts either a single string or an array of strings."
+
+[[locations]]
+scope = "user"
+format = "jsonc"
+kind = "config"
+order = 2
+path.any = "~/.gemini/settings.json"
+config = { fallback_key = "contextFileName", names_mode = "additional" }
+[locations.source]
+kind = "documentation"
+url = "https://geminicli.com/docs/cli/configuration/"
+read_on = 2026-10-17
+quote = "Can be a single filename or a list of accepted filenames"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 10
+nested = "on-demand"
+path.any = "GEMINI.md"
+imports = { syntax = "@", depth = 5, relative_to = "file" }
+[locations.source]
+kind = "documentation"
+url = "https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/configuration.md"
+read_on = 2026-10-17
+quote = "The CLI searches for the configured context file in the current working directory and then in each parent directory up to either the project root (identified by a .git folder) or your home directory."
+note = "subdirectory files load just-in-time when a tool touches that directory (docs/cli/gemini-md.md); the documented 200-directory downward scan has no caller in the source at HEAD (ed96faed). Import depth 5: memoryImportProcessor.ts:196"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "ignored"
+order = 90
+path.any = ["AGENTS.md", "CLAUDE.md"]
+note = "Gemini CLI reads only the configured context file name (GEMINI.md by default). AGENTS.md or CLAUDE.md are read only if listed in context.fileName."
+replaced_by = "GEMINI.md (or add the name to context.fileName)"
+[locations.source]
+kind = "documentation"
+url = "https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/gemini-md.md"
+read_on = 2026-10-17
+quote = "\"fileName\": [\"AGENTS.md\", \"CONTEXT.md\", \"GEMINI.md\"]"

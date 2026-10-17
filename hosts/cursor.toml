@@ -1,0 +1,108 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "cursor"
+name = "Cursor"
+vendor = "Anysphere"
+kind = "ide"
+status = "active"
+hints.show = "Customize → Rules"
+shows_loaded = "Customize → Rules shows every rule and its status; no CLI command lists the active rules"
+application = "Cursor"
+
+[detect]
+paths = ["~/.cursor", "~/.config/Cursor"]
+binaries = ["cursor", "cursor-agent", "agent"]
+
+[recommended]
+lines = 500
+[recommended.source]
+kind = "documentation"
+url = "https://cursor.com/docs/context/rules"
+read_on = 2026-10-17
+quote = "Keep rules under 500 lines"
+
+[composition]
+text = "Team Rules → Project Rules → User Rules, all merged, earlier sources win on conflict; rule contents sit at the start of the model context; rules are identified by their full path."
+[composition.source]
+kind = "documentation"
+url = "https://cursor.com/docs/context/rules"
+read_on = 2026-10-17
+quote = "Rules are applied in this order: Team Rules → Project Rules → User Rules. All applicable rules are merged; earlier sources take precedence when guidance conflicts."
+
+# ---- project rules: .mdc only, front matter decides -------------------------------------
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 10
+nested = "conditional"
+path.any = ".cursor/rules/**/*.mdc"
+frontmatter = { fields = ["alwaysApply", "globs", "description"], required = true, glob_fields = ["globs"], always_when = ["alwaysApply=true"], conditional_when = ["globs", "description"], manual_when_none_of = ["alwaysApply=true", "globs", "description"], on_invalid = "not-loaded" }
+[locations.source]
+kind = "documentation"
+url = "https://cursor.com/docs/context/rules"
+read_on = 2026-10-17
+quote = "Project rules live in .cursor/rules as .mdc files and are version-controlled."
+note = "alwaysApply: true → always; false + globs → auto-attached; false + description → agent decides; neither → only when @-mentioned. A rule with a missing or unclosed `---` silently does not load (forum, 2026-02-20)"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "ignored"
+order = 11
+nested = "conditional"
+path.any = ".cursor/rules/**/*.md"
+note = "A plain .md file in .cursor/rules is ignored by the rules system because it has no front matter; rename it to .mdc or use AGENTS.md."
+replaced_by = ".cursor/rules/<name>.mdc"
+[locations.source]
+kind = "documentation"
+url = "https://cursor.com/docs/context/rules"
+read_on = 2026-10-17
+quote = "Project rules must use the .mdc extension. A plain .md file in .cursor/rules is ignored by the rules system because it has no frontmatter"
+
+# ---- AGENTS.md, CLAUDE.md -----------------------------------------------------------------
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 20
+nested = "on-demand"
+path.any = "AGENTS.md"
+[locations.source]
+kind = "documentation"
+url = "https://cursor.com/docs/context/rules"
+read_on = 2026-10-17
+quote = "Cursor supports AGENTS.md in the project root and subdirectories."
+note = "nested AGENTS.md are applied when working with files in that directory or its children"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 21
+path.any = "CLAUDE.md"
+[locations.source]
+kind = "documentation"
+url = "https://cursor.com/docs/context/rules"
+read_on = 2026-10-17
+quote = "Cursor reads CLAUDE.md files the same way it reads AGENTS.md. Place a CLAUDE.md file in your project root and Cursor picks it up automatically. CLAUDE.md files are always applied to every conversation, regardless of any alwaysApply frontmatter setting."
+
+# ---- legacy ---------------------------------------------------------------------------------
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 30
+legacy = true
+replaced_by = ".cursor/rules/<name>.mdc with alwaysApply: true"
+path.any = ".cursorrules"
+[locations.source]
+kind = "documentation"
+url = "https://cursor.com/docs/context/rules"
+read_on = 2026-10-17
+quote = "The .cursorrules file in your project root is legacy and will be deprecated."
+note = "when the same rule exists in .cursorrules and .cursor/rules, the .mdc version wins silently (forum, 2026-02-20)"

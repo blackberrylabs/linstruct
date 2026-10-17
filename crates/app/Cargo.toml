@@ -1,0 +1,74 @@
+[package]
+name = "linstruct"
+description = "Your AI instruction files, as each agent will actually read them — read-only"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "linstruct-app"
+path = "src/main.rs"
+
+[dependencies]
+linstruct-core = { path = "../core" }
+bbl-report.workspace = true
+bbl-hostrules.workspace = true
+iced = { version = "=0.13.1", features = ["tokio"] }
+bbl-ui.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+# ---------------------------------------------------------------- packaging
+# `packaging/build.sh` builds the workspace once, then runs `cargo deb --no-build` and
+# `cargo generate-rpm` from here, so one package ships both binaries.
+
+[package.metadata.deb]
+name = "linstruct"
+maintainer = "Alexandre Do <alexandre@blackberrylabs.dev>"
+copyright = "2026, Alexandre Do"
+license-file = ["../../LICENSE", "0"]
+extended-description = """\
+A short paragraph: what Linstruct reads, what it shows, what it never does. Ships the \
+desktop app (linstruct-app) and the command line (linstruct)."""
+section = "devel"
+priority = "optional"
+depends = "$auto, libxkbcommon0, libwayland-client0 | libx11-6"
+recommends = "libvulkan1, mesa-vulkan-drivers"
+assets = [
+    ["target/release/linstruct-app", "usr/bin/", "755"],
+    ["target/release/linstruct", "usr/bin/", "755"],
+    ["../../assets/linstruct.desktop", "usr/share/applications/", "644"],
+    ["../../assets/icon.svg", "usr/share/icons/hicolor/scalable/apps/linstruct.svg", "644"],
+    ["../../assets/icon-16.png", "usr/share/icons/hicolor/16x16/apps/linstruct.png", "644"],
+    ["../../assets/icon-32.png", "usr/share/icons/hicolor/32x32/apps/linstruct.png", "644"],
+    ["../../assets/icon-48.png", "usr/share/icons/hicolor/48x48/apps/linstruct.png", "644"],
+    ["../../assets/icon-64.png", "usr/share/icons/hicolor/64x64/apps/linstruct.png", "644"],
+    ["../../assets/icon-128.png", "usr/share/icons/hicolor/128x128/apps/linstruct.png", "644"],
+    ["../../assets/icon-256.png", "usr/share/icons/hicolor/256x256/apps/linstruct.png", "644"],
+    ["../../assets/icon-512.png", "usr/share/icons/hicolor/512x512/apps/linstruct.png", "644"],
+    ["../../README.md", "usr/share/doc/linstruct/README.md", "644"],
+]
+
+[package.metadata.generate-rpm]
+name = "linstruct"
+summary = "Your AI instruction files, as each agent will actually read them"
+license = "MIT"
+url = "https://github.com/blackberrylabs/linstruct"
+requires = { libxkbcommon = "*" }
+assets = [
+    { source = "target/release/linstruct-app", dest = "/usr/bin/linstruct-app", mode = "755" },
+    { source = "target/release/linstruct", dest = "/usr/bin/linstruct", mode = "755" },
+    { source = "assets/linstruct.desktop", dest = "/usr/share/applications/linstruct.desktop", mode = "644" },
+    { source = "assets/icon.svg", dest = "/usr/share/icons/hicolor/scalable/apps/linstruct.svg", mode = "644" },
+    { source = "assets/icon-16.png", dest = "/usr/share/icons/hicolor/16x16/apps/linstruct.png", mode = "644" },
+    { source = "assets/icon-32.png", dest = "/usr/share/icons/hicolor/32x32/apps/linstruct.png", mode = "644" },
+    { source = "assets/icon-48.png", dest = "/usr/share/icons/hicolor/48x48/apps/linstruct.png", mode = "644" },
+    { source = "assets/icon-64.png", dest = "/usr/share/icons/hicolor/64x64/apps/linstruct.png", mode = "644" },
+    { source = "assets/icon-128.png", dest = "/usr/share/icons/hicolor/128x128/apps/linstruct.png", mode = "644" },
+    { source = "assets/icon-256.png", dest = "/usr/share/icons/hicolor/256x256/apps/linstruct.png", mode = "644" },
+    { source = "assets/icon-512.png", dest = "/usr/share/icons/hicolor/512x512/apps/linstruct.png", mode = "644" },
+    { source = "README.md", dest = "/usr/share/doc/linstruct/README.md", mode = "644", doc = true },
+    { source = "LICENSE", dest = "/usr/share/licenses/linstruct/LICENSE", mode = "644", doc = true },
+]

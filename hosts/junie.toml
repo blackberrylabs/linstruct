@@ -1,0 +1,89 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "junie"
+name = "JetBrains Junie"
+vendor = "JetBrains"
+kind = "ide"
+status = "active"
+hints.show = "Settings | Tools | Junie | Project Settings (Guidelines path)"
+shows_loaded = "Not documented beyond the CLI's “marks them clearly”; the Project Settings page shows the guidelines path"
+dedup_identical = true
+
+[detect]
+paths = ["~/.junie", "~/.config/JetBrains/*/plugins/junie*", "~/.local/share/JetBrains/*/junie*"]
+binaries = ["junie"]
+
+[composition]
+text = "A custom path from the settings, else .junie/AGENTS.md alone, else the project-root AGENTS.md combined with .junie/playbook.md and .junie/rules/*.md, else the legacy guidelines; the CLI adds ~/.junie/AGENTS.md, project guidelines taking precedence."
+[composition.source]
+kind = "documentation"
+url = "https://junie.jetbrains.com/docs/junie-ide-plugin.html"
+read_on = 2026-10-17
+quote = "If it exists, it is used alone, and no other guidelines files are combined with it."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 0
+path.any = "~/.junie/AGENTS.md"
+[locations.source]
+kind = "documentation"
+url = "https://junie.jetbrains.com/docs/guidelines-and-memory.html"
+read_on = 2026-10-17
+quote = "Junie CLI also supports global guidelines from ~/.junie/AGENTS.md."
+note = "if the global and project guidelines have identical content, Junie automatically deduplicates"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "override"
+order = 10
+path.any = ".junie/AGENTS.md"
+[locations.source]
+kind = "documentation"
+url = "https://junie.jetbrains.com/docs/junie-ide-plugin.html"
+read_on = 2026-10-17
+quote = ".junie/AGENTS.md — If it exists, it is used alone, and no other guidelines files are combined with it."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 11
+path.any = "AGENTS.md"
+only_if_absent = [".junie/AGENTS.md"]
+[locations.source]
+kind = "documentation"
+url = "https://junie.jetbrains.com/docs/junie-ide-plugin.html"
+read_on = 2026-10-17
+quote = "Used only if no file exists in the .junie folder. It is combined with .junie/playbook.md and every .junie/rules/*.md file, if present."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 12
+path.any = [".junie/playbook.md", ".junie/rules/*.md"]
+only_if_absent = [".junie/AGENTS.md"]
+[locations.source]
+kind = "documentation"
+url = "https://junie.jetbrains.com/docs/junie-plugin-project-settings.html"
+read_on = 2026-10-17
+quote = "otherwise it combines the project-root AGENTS.md with .junie/playbook.md and any .junie/rules/*.md files, falling back to the legacy .junie/guidelines.md."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 13
+legacy = true
+replaced_by = ".junie/AGENTS.md"
+path.any = [".junie/guidelines.md", ".junie/guidelines/*.md"]
+only_if_absent = [".junie/AGENTS.md", "AGENTS.md"]
+[locations.source]
+kind = "documentation"
+url = "https://junie.jetbrains.com/docs/junie-ide-plugin.html"
+read_on = 2026-10-17
+quote = ".junie/guidelines.md, and the .junie/guidelines/ directory, which collects all .md files inside it."

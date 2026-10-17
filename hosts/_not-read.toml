@@ -1,0 +1,41 @@
+# Hosts Linstruct does not read yet, each with the reason. Not a judgement on the host.
+
+id = "_not-read"
+name = "Not read"
+kind = "list"
+status = "out-of-scope"
+
+[[hosts]]
+id = "antigravity-cli"
+name = "Antigravity CLI"
+reason = "replaced Gemini CLI for unpaid and Google One accounts on 2026-06-18; its instruction files are not yet established from documentation"
+
+[[hosts]]
+id = "jules"
+name = "Jules"
+reason = "cloud agent (Google): reads AGENTS.md on its own infrastructure, nothing on this machine to read"
+
+[[hosts]]
+id = "factory"
+name = "Factory Droid"
+reason = "listed on agents.md; its local instruction files and limits are not yet established from documentation"
+
+[[hosts]]
+id = "augment"
+name = "Augment Code"
+reason = "listed on agents.md; its local instruction files (.augment/rules) and limits are not yet established from documentation"
+
+[[hosts]]
+id = "copilot-github-com"
+name = "Copilot on GitHub.com (cloud agent, code review)"
+reason = "reads the repository on GitHub's side (plus REVIEW.md for code review); nothing on this machine to read beyond what the Copilot sheet already covers"
+
+[[hosts]]
+id = "cursor-user-rules"
+name = "Cursor User Rules and Team Rules"
+reason = "not files: User Rules live in Customize → Rules, Team Rules in the dashboard"
+
+[[hosts]]
+id = "warp-global"
+name = "Warp Global Rules"
+reason = "not a file on disk: kept in Warp Drive"

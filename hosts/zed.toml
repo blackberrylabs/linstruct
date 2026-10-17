@@ -1,0 +1,157 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "zed"
+name = "Zed"
+vendor = "Zed Industries"
+kind = "ide"
+status = "active"
+hints.show = "Agent panel → token-usage tooltip → Rules; Agent menu → Open Project Rules (AGENTS.md)"
+shows_loaded = "The token-usage tooltip of the Agent panel has a Rules section counting the global and project rules (source only, thread_view.rs); the Agent menu opens them"
+skips_empty = true
+
+[detect]
+paths = ["~/.config/zed", "~/.local/share/zed"]
+binaries = ["zed", "zeditor"]
+
+[composition]
+text = "The personal AGENTS.md, then one project file per worktree root — the first existing name of nine; project instructions override personal ones; rendered under `## User's Custom Instructions`."
+[composition.source]
+kind = "documentation"
+url = "https://zed.dev/docs/ai/instructions"
+read_on = 2026-10-17
+quote = "Project instructions override personal AGENTS.md when they conflict."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 0
+path.any = "~/.config/zed/AGENTS.md"
+path.windows = "%APPDATA%/Zed/AGENTS.md"
+[locations.source]
+kind = "documentation"
+url = "https://zed.dev/docs/ai/instructions"
+read_on = 2026-10-17
+quote = "Create or edit: ~/.config/zed/AGENTS.md"
+note = "empty or whitespace-only files are treated as no user AGENTS.md (user_agents_md.rs:8)"
+
+# One project file: the first of this list that exists at the worktree root.
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 10
+path.any = ".rules"
+[locations.source]
+kind = "documentation"
+url = "https://zed.dev/docs/ai/instructions"
+read_on = 2026-10-17
+quote = "Zed uses the first matching file in this list: .rules, .cursorrules, .windsurfrules, .clinerules, .github/copilot-instructions.md, AGENT.md, AGENTS.md, CLAUDE.md, GEMINI.md"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 11
+path.any = ".cursorrules"
+only_if_absent = [".rules"]
+[locations.source]
+kind = "source-code"
+url = "https://github.com/zed-industries/zed/blob/main/crates/prompt_store/src/prompts.rs"
+read_on = 2026-10-17
+quote = "RULES_FILE_NAMES"
+note = "L22-32, same order as the documentation; agent.rs:1524-1531 takes the first match per worktree"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 12
+path.any = ".windsurfrules"
+only_if_absent = [".rules", ".cursorrules"]
+[locations.source]
+kind = "source-code"
+url = "https://github.com/zed-industries/zed/blob/main/crates/prompt_store/src/prompts.rs"
+read_on = 2026-10-17
+quote = "RULES_FILE_NAMES"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 13
+dir_ok = true
+path.any = ".clinerules"
+only_if_absent = [".rules", ".cursorrules", ".windsurfrules"]
+[locations.source]
+kind = "source-code"
+url = "https://github.com/zed-industries/zed/blob/main/crates/agent/src/agent.rs"
+read_on = 2026-10-17
+quote = "Cline supports .clinerules being a directory, but that is not currently supported."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 14
+path.any = ".github/copilot-instructions.md"
+only_if_absent = [".rules", ".cursorrules", ".windsurfrules", ".clinerules"]
+[locations.source]
+kind = "source-code"
+url = "https://github.com/zed-industries/zed/blob/main/crates/prompt_store/src/prompts.rs"
+read_on = 2026-10-17
+quote = "RULES_FILE_NAMES"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 15
+path.any = "AGENT.md"
+only_if_absent = [".rules", ".cursorrules", ".windsurfrules", ".clinerules", ".github/copilot-instructions.md"]
+[locations.source]
+kind = "source-code"
+url = "https://github.com/zed-industries/zed/blob/main/crates/prompt_store/src/prompts.rs"
+read_on = 2026-10-17
+quote = "RULES_FILE_NAMES"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 16
+path.any = "AGENTS.md"
+only_if_absent = [".rules", ".cursorrules", ".windsurfrules", ".clinerules", ".github/copilot-instructions.md", "AGENT.md"]
+[locations.source]
+kind = "documentation"
+url = "https://zed.dev/docs/ai/instructions"
+read_on = 2026-10-17
+quote = "Zed supports AGENTS.md as the primary instruction file for personal and project-level agent guidance."
+note = "worktree root only: no nested discovery (agent.rs:1524-1531)"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 17
+path.any = "CLAUDE.md"
+only_if_absent = [".rules", ".cursorrules", ".windsurfrules", ".clinerules", ".github/copilot-instructions.md", "AGENT.md", "AGENTS.md"]
+[locations.source]
+kind = "source-code"
+url = "https://github.com/zed-industries/zed/blob/main/crates/prompt_store/src/prompts.rs"
+read_on = 2026-10-17
+quote = "RULES_FILE_NAMES"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 18
+path.any = "GEMINI.md"
+only_if_absent = [".rules", ".cursorrules", ".windsurfrules", ".clinerules", ".github/copilot-instructions.md", "AGENT.md", "AGENTS.md", "CLAUDE.md"]
+[locations.source]
+kind = "source-code"
+url = "https://github.com/zed-industries/zed/blob/main/crates/prompt_store/src/prompts.rs"
+read_on = 2026-10-17
+quote = "RULES_FILE_NAMES"

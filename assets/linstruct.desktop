@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Linstruct
+GenericName=AI instruction files linter
+GenericName[fr]=Vérificateur de fichiers d'instructions IA
+Comment=Your AI instruction files, as each agent will actually read them. Reads, never writes.
+Comment[fr]=Vos fichiers d'instructions IA tels que chaque agent les lira. Lit, n'écrit jamais.
+Exec=linstruct-app
+Icon=linstruct
+Terminal=false
+Categories=Development;Utility;
+Keywords=ai agents;CLAUDE.md;AGENTS.md;cursor rules;lint;
+StartupWMClass=linstruct-app

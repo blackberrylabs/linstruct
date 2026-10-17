@@ -1,0 +1,103 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "opencode"
+name = "OpenCode"
+vendor = "Anomaly"
+kind = "cli"
+status = "active"
+hints.show = "the system prompt (each file under “Instructions from: <path>”)"
+shows_loaded = "Not documented; the prompt carries an `Instructions from: <path>` header per file, and the debug log says `instructions rescanned`"
+
+[detect]
+paths = ["~/.config/opencode", "~/.local/share/opencode"]
+binaries = ["opencode"]
+
+[composition]
+text = "Global file first, then the project files nearest to farthest, then the configured `instructions`; each rendered as `Instructions from: <path>`; the first matching name wins in each category."
+[composition.source]
+kind = "documentation"
+url = "https://opencode.ai/docs/rules/"
+read_on = 2026-10-17
+quote = "The first matching file wins in each category. For example, if you have both AGENTS.md and CLAUDE.md, only AGENTS.md is used."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 0
+path.any = "~/.config/opencode/AGENTS.md"
+[locations.source]
+kind = "documentation"
+url = "https://opencode.ai/docs/rules/"
+read_on = 2026-10-17
+quote = "You can also have global rules in a ~/.config/opencode/AGENTS.md file. This gets applied across all opencode sessions."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 1
+path.any = "~/.claude/CLAUDE.md"
+only_if_absent = ["~/.config/opencode/AGENTS.md"]
+[locations.source]
+kind = "documentation"
+url = "https://opencode.ai/docs/rules/"
+read_on = 2026-10-17
+quote = "Global rules: ~/.claude/CLAUDE.md (used if no ~/.config/opencode/AGENTS.md exists)"
+note = "documented, but the dev source at 0a03b4bc has no CLAUDE.md lookup; disabled by OPENCODE_DISABLE_CLAUDE_CODE_PROMPT=1"
+
+[[locations]]
+scope = "user"
+format = "jsonc"
+kind = "config"
+order = 2
+path.any = "~/.config/opencode/opencode.json"
+config = { list_key = "instructions", relative_to = "file" }
+[locations.source]
+kind = "documentation"
+url = "https://opencode.ai/docs/rules/"
+read_on = 2026-10-17
+quote = "You can specify custom instruction files in your opencode.json or the global ~/.config/opencode/opencode.json."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 10
+nested = "on-demand"
+path.any = "AGENTS.md"
+[locations.source]
+kind = "documentation"
+url = "https://opencode.ai/docs/rules/"
+read_on = 2026-10-17
+quote = "Place an AGENTS.md in your project root for project-specific rules. These only apply when you are working in this directory or its sub-directories."
+note = "every AGENTS.md from cwd up to the project root is read; subdirectory files are injected after the Read tool touches a file there (read.ts:82-85)"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 11
+path.any = "CLAUDE.md"
+only_if_absent = ["AGENTS.md"]
+[locations.source]
+kind = "documentation"
+url = "https://opencode.ai/docs/rules/"
+read_on = 2026-10-17
+quote = "Project rules: CLAUDE.md in your project directory (used if no AGENTS.md exists)"
+note = "documented, but absent from the dev source at 0a03b4bc"
+
+[[locations]]
+scope = "project"
+format = "jsonc"
+kind = "config"
+order = 12
+path.any = "opencode.json"
+config = { list_key = "instructions", relative_to = "project" }
+[locations.source]
+kind = "documentation"
+url = "https://opencode.ai/docs/rules/"
+read_on = 2026-10-17
+quote = "\"instructions\": [\"CONTRIBUTING.md\", \"docs/guidelines.md\", \".cursor/rules/*.md\"]"
+note = "remote URLs are fetched by the host with a 5-second timeout; Linstruct lists them and never fetches"

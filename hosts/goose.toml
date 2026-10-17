@@ -1,0 +1,64 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "goose"
+name = "Goose"
+vendor = "Block"
+kind = "cli"
+status = "active"
+hints.show = "the system prompt (### Global Hints / ### Project Hints)"
+shows_loaded = "Not documented; hints are injected under `### Global Hints`, `### Project Hints` and `### Subdirectory Hints (…)`; skipped or oversized imports only reach the tracing log"
+
+[detect]
+paths = ["~/.config/goose"]
+binaries = ["goose"]
+
+[composition]
+text = "Global hints, then the project hints from the git root down to the working directory (root first), then subdirectory hints as directories are touched; local hints win over global ones."
+[composition.source]
+kind = "documentation"
+url = "https://goose-docs.ai/docs/guides/context-engineering/using-goosehints"
+read_on = 2026-10-17
+quote = "If the instructions in your local hints file conflict with your global preferences, goose will prioritize the local hints."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 0
+path.any = ["~/.config/goose/.goosehints", "~/.config/goose/AGENTS.md"]
+imports = { syntax = "@", depth = 3, relative_to = "file", off_above_bytes = 131072 }
+[locations.source]
+kind = "documentation"
+url = "https://goose-docs.ai/docs/guides/context-engineering/using-goosehints"
+read_on = 2026-10-17
+quote = "Global hints are stored in ~/.config/goose/.goosehints."
+note = "the Developer extension must be enabled for hints to be used"
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 1
+path.any = "~/.agents/AGENTS.md"
+[locations.source]
+kind = "source-code"
+url = "https://github.com/block/goose/blob/main/crates/goose/src/hints/load_hints.rs"
+read_on = 2026-10-17
+quote = "Paths::in_agents_home_dir"
+note = "L244-249: loaded when AGENTS.md is among the context file names; not on the documentation page"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 10
+nested = "on-demand"
+path.any = [".goosehints", "AGENTS.md"]
+imports = { syntax = "@", depth = 3, relative_to = "file", within_project = true, off_above_bytes = 131072 }
+[locations.source]
+kind = "documentation"
+url = "https://goose-docs.ai/docs/guides/context-engineering/using-goosehints"
+read_on = 2026-10-17
+quote = "By default, goose looks for both AGENTS.md and .goosehints at each level."
+note = "CONTEXT_FILE_NAMES changes the names; imports: depth 3, 64 references, 1 MiB expanded per hint file, references not parsed in a file over 128 KB (import_files.rs:14-16, 295-304); an import past the budget is skipped, not truncated"

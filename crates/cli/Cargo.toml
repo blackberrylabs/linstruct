@@ -1,0 +1,19 @@
+[package]
+name = "linstruct-cli"
+description = "Command line of Linstruct"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "linstruct"
+path = "src/main.rs"
+
+[dependencies]
+linstruct-core = { path = "../core" }
+anyhow.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+bbl-hostrules.workspace = true

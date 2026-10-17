@@ -1,0 +1,68 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "kiro"
+name = "Kiro"
+vendor = "Amazon"
+kind = "ide"
+status = "active"
+application = "Kiro (IDE and CLI)"
+hints.show = "kiro-cli, then /context show"
+shows_loaded = "Kiro CLI: `/context show` lists the matched files with their share of the context window; IDE: the Steering section of the Kiro panel"
+
+[detect]
+paths = ["~/.kiro"]
+binaries = ["kiro", "kiro-cli"]
+
+[composition]
+text = "Global steering, then workspace steering (always-included files, plus fileMatch / manual / auto rules on condition), plus every AGENTS.md; workspace instructions win over global ones."
+[composition.source]
+kind = "documentation"
+url = "https://kiro.dev/docs/steering/"
+read_on = 2026-10-17
+quote = "In case of conflicting instructions between global and workspace steering, Kiro will prioritize the workspace steering instructions."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "rules"
+order = 0
+path.any = "~/.kiro/steering/*.md"
+imports = { syntax = "#[[file:", depth = 0, relative_to = "file" }
+frontmatter = { fields = ["inclusion", "fileMatchPattern", "name", "description"], glob_fields = ["fileMatchPattern"], at_byte_zero = true, always_when = ["inclusion=always"], conditional_when = ["inclusion=fileMatch", "inclusion=manual", "inclusion=auto"] }
+[locations.source]
+kind = "documentation"
+url = "https://kiro.dev/docs/steering/"
+read_on = 2026-10-17
+quote = "Global steering files reside in your home directory under ~/.kiro/steering/, and apply to all workspaces."
+note = "AGENTS.md there is always included; references `#[[file:…]]` resolve from ~/.kiro/steering/ for global steering"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 10
+path.any = ".kiro/steering/*.md"
+imports = { syntax = "#[[file:", depth = 0, relative_to = "project" }
+frontmatter = { fields = ["inclusion", "fileMatchPattern", "name", "description"], glob_fields = ["fileMatchPattern"], at_byte_zero = true, always_when = ["inclusion=always"], conditional_when = ["inclusion=fileMatch", "inclusion=manual", "inclusion=auto"] }
+[locations.source]
+kind = "documentation"
+url = "https://kiro.dev/docs/steering/"
+read_on = 2026-10-17
+quote = "Workspace steering files reside in your project root folder under .kiro/steering/, and apply only to that specific workspace."
+note = "inclusion: always (default), fileMatch + fileMatchPattern, manual (#name), auto (name + description); Kiro CLI V1/V2 never load fileMatch and manual files automatically; an unresolved reference leaves a visible marker in the content"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 11
+nested = "launch"
+path.any = "AGENTS.md"
+imports = { syntax = "#[[file:", depth = 0, relative_to = "file" }
+[locations.source]
+kind = "documentation"
+url = "https://kiro.dev/docs/steering/"
+read_on = 2026-10-17
+quote = "AGENTS.md files do not support inclusion modes and are always included."
+note = "AGENTS.md files are also discovered in subdirectories throughout your workspace; custom agents include steering only through their `resources`"

@@ -1,0 +1,111 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "cline"
+name = "Cline"
+vendor = "Cline Bot Inc."
+kind = "extension"
+status = "active"
+hints.show = "the Rules panel (scale icon at the bottom of the Cline panel)"
+shows_loaded = "All detected rule types appear in the Rules panel, each with a toggle"
+
+[detect]
+paths = ["~/.cline", "~/Documents/Cline", "~/.vscode/extensions/saoudrizwan.claude-dev*"]
+binaries = ["cline"]
+
+[composition]
+text = "Workspace and global rules are combined under `# Rules`, one `## <name>` section per file sorted by name; workspace rules take precedence when they conflict."
+[composition.source]
+kind = "documentation"
+url = "https://docs.cline.bot/features/cline-rules"
+read_on = 2026-10-17
+quote = "When both workspace and global rules exist, Cline combines them. … Workspace rules take precedence when they conflict with global rules."
+
+# ---- global ---------------------------------------------------------------------------------
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "rules"
+order = 0
+path.any = ["~/Documents/Cline/Rules/*.md", "~/Documents/Cline/Rules/*.markdown", "~/Documents/Cline/Rules/*.txt", "~/.cline/rules/*.md", "~/.cline/rules/*.markdown", "~/.cline/rules/*.txt", "~/Cline/Rules/*.md"]
+frontmatter = { fields = ["paths"], glob_fields = ["paths"], conditional_when = ["paths"], never_when_empty = "paths" }
+[locations.source]
+kind = "documentation"
+url = "https://docs.cline.bot/features/cline-rules"
+read_on = 2026-10-17
+quote = "Cline also searches ~/.cline/rules and ~/Cline/Rules for global rules."
+note = "accepted extensions .md .markdown .txt (loader.ts:39); directory read is not recursive"
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 1
+path.any = "~/.agents/AGENTS.md"
+[locations.source]
+kind = "source-code"
+url = "https://github.com/cline/cline/blob/main/sdk/packages/shared/src/storage/paths.ts"
+read_on = 2026-10-17
+quote = "~/.agents/AGENTS.md"
+note = "listed in the docs table as the global AGENTS.md (“Standard format for cross-tool compatibility”)"
+
+# ---- workspace ------------------------------------------------------------------------------
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 10
+path.any = [".clinerules/*.md", ".clinerules/*.markdown", ".clinerules/*.txt", ".cline/rules/*.md", ".cline/rules/*.markdown", ".cline/rules/*.txt"]
+frontmatter = { fields = ["paths"], glob_fields = ["paths"], conditional_when = ["paths"], never_when_empty = "paths" }
+[locations.source]
+kind = "documentation"
+url = "https://docs.cline.bot/features/cline-rules"
+read_on = 2026-10-17
+quote = "Workspace rules go in .clinerules/ or .cline/rules/ at your project root."
+note = ".clinerules/workflows, hooks and skills are excluded from rules; `paths: []` means the rule never activates"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 11
+legacy = true
+dir_ok = true
+replaced_by = ".clinerules/<name>.md"
+path.any = ".clinerules"
+[locations.source]
+kind = "source-code"
+url = "https://github.com/cline/cline/blob/main/sdk/packages/core/src/runtime/safety/cline-rules.ts"
+read_on = 2026-10-17
+quote = "the legacy .clinerules directory (or single file) and .cline/rules"
+note = "the single file is still read by the loader (user-instruction-config-loader.ts:522-531); the docs page no longer mentions it"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 12
+path.any = "AGENTS.md"
+[locations.source]
+kind = "documentation"
+url = "https://docs.cline.bot/features/cline-rules"
+read_on = 2026-10-17
+quote = "AGENTS.md"
+note = "root only: the recursive AGENTS.md formatter has no callers at HEAD (a42df8c8)"
+
+# ---- also detected: other tools' files, read as rules ---------------------------------------
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 20
+path.any = [".cursorrules", ".windsurfrules", ".cursor/rules/*.mdc"]
+[locations.source]
+kind = "documentation"
+url = "https://docs.cline.bot/features/cline-rules"
+read_on = 2026-10-17
+quote = ".cursorrules … .windsurfrules — Automatically detected"
+note = ".cursor/rules/*.mdc: external-rules.ts:29-32; the front matter of an .mdc is not interpreted by Cline"

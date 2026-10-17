@@ -1,0 +1,34 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "jetbrains-ai"
+name = "JetBrains AI Assistant"
+vendor = "JetBrains"
+kind = "ide"
+status = "active"
+hints.show = "the attachments list at the top of an AI Assistant response"
+shows_loaded = "Expand the list of attachments at the beginning of a response to see which project rules were attached"
+
+[detect]
+paths = ["~/.config/JetBrains/*/options/aiAssistant*.xml", "~/.config/JetBrains/*/plugins/ai-assistant*"]
+
+[composition]
+text = "Every .md file of .aiassistant/rules is attached to each chat session according to its type (Always, Manually, By model decision, By file patterns, Off), set per file in the editor."
+[composition.source]
+kind = "documentation"
+url = "https://www.jetbrains.com/help/ai-assistant/configure-project-rules.html"
+read_on = 2026-10-17
+quote = "By default, project rules are automatically added to each chat session"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 10
+path.any = ".aiassistant/rules/*.md"
+[locations.source]
+kind = "documentation"
+url = "https://www.jetbrains.com/help/ai-assistant/configure-project-rules.html"
+read_on = 2026-10-17
+quote = ".aiassistant/rules"
+note = "the rule type is metadata written by the IDE; the help pages name no front matter keys, so Linstruct reads these files as always-on prose"

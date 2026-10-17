@@ -1,0 +1,149 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "kilo-code"
+name = "Kilo Code"
+vendor = "Kilo AI"
+kind = "cli"
+status = "active"
+hints.show = "Settings → Agent Behaviour → Rules"
+shows_loaded = "The Rules subtab of the settings; no command lists the loaded files"
+
+[detect]
+paths = ["~/.config/kilo", "~/.kilo", "~/.kilocode"]
+binaries = ["kilo"]
+
+[composition]
+text = "Agent prompt, then the project's `instructions` entries in order, then the project AGENTS.md, then the global `instructions`; each block prefixed `Instructions from: <path>`; project entries win over global ones."
+[composition.source]
+kind = "documentation"
+url = "https://kilo.ai/docs/customize/custom-rules"
+read_on = 2026-10-17
+quote = "Rules are loaded in the order they appear in the instructions array in kilo.jsonc … Project-level instructions take precedence over global instructions for conflicting directives."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 0
+path.any = "~/.config/kilo/AGENTS.md"
+[locations.source]
+kind = "source-code"
+url = "https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/session/instruction.ts"
+read_on = 2026-10-17
+quote = "KILO_CONFIG_DIR/AGENTS.md"
+note = "L63-73: first existing of ~/.config/kilo/AGENTS.md and ~/.claude/CLAUDE.md (until migration)"
+
+[[locations]]
+scope = "user"
+format = "jsonc"
+kind = "config"
+order = 1
+path.any = "~/.config/kilo/kilo.jsonc"
+config = { list_key = "instructions", relative_to = "file" }
+[locations.source]
+kind = "documentation"
+url = "https://kilo.ai/docs/customize/custom-rules"
+read_on = 2026-10-17
+quote = "Global rules are configured via the instructions key in your global kilo.jsonc config file"
+note = "entries are paths, globs or URLs; a URL is fetched at session start with a 5-second timeout and silently skipped when unreachable — Linstruct never fetches it"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 10
+nested = "on-demand"
+case_sensitive = true
+path.any = "AGENTS.md"
+[locations.source]
+kind = "documentation"
+url = "https://kilo.ai/docs/customize/agents-md"
+read_on = 2026-10-17
+quote = "AGENTS.md (uppercase, plural - recommended) … The filename must be uppercase"
+note = "per-directory AGENTS.md are injected when the agent reads files in that directory; parents up to the worktree root are loaded at start"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 11
+case_sensitive = true
+path.any = "AGENT.md"
+only_if_absent = ["AGENTS.md"]
+[locations.source]
+kind = "documentation"
+url = "https://kilo.ai/docs/customize/agents-md"
+read_on = 2026-10-17
+quote = "AGENT.md (uppercase, singular - fallback)"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 12
+path.any = "CLAUDE.md"
+only_if_absent = ["AGENTS.md", "AGENT.md"]
+[locations.source]
+kind = "source-code"
+url = "https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/session/instruction.ts"
+read_on = 2026-10-17
+quote = "The first project-level match wins so we don't stack AGENTS.md/CLAUDE.md from every ancestor."
+note = "docs: “CLAUDE.md — Also supported for compatibility”"
+
+[[locations]]
+scope = "project"
+format = "jsonc"
+kind = "config"
+order = 13
+path.any = "kilo.jsonc"
+config = { list_key = "instructions", relative_to = "project" }
+[locations.source]
+kind = "documentation"
+url = "https://kilo.ai/docs/customize/custom-rules"
+read_on = 2026-10-17
+quote = "Project rules are configured via the instructions key in your project's kilo.jsonc file."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 20
+legacy = true
+replaced_by = "AGENTS.md or the instructions key of kilo.jsonc"
+path.any = [".kilo/rules/*.md", ".kilocode/rules/*.md", ".kilo/rules-*/*.md", ".kilocode/rules-*/*.md"]
+[locations.source]
+kind = "documentation"
+url = "https://kilo.ai/docs/customize/custom-rules"
+read_on = 2026-10-17
+quote = "If .kilocode/rules/ directories exist in your project, their contents are automatically included for backward compatibility."
+note = "rules-migrator.ts: .md only, not recursive; modes code, architect, ask, debug, orchestrator"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 21
+legacy = true
+replaced_by = "AGENTS.md"
+path.any = [".kilocoderules", ".kilocoderules-*"]
+[locations.source]
+kind = "documentation"
+url = "https://kilo.ai/docs/customize/custom-instructions"
+read_on = 2026-10-17
+quote = "Legacy .kilocoderules… these are still loaded via auto-migration"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 22
+legacy = true
+replaced_by = "AGENTS.md"
+path.any = "CONTEXT.md"
+[locations.source]
+kind = "source-code"
+url = "https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/session/instruction.ts"
+read_on = 2026-10-17
+quote = "// deprecated"
+note = "docs list CONTEXT.md as “Additional project context”"

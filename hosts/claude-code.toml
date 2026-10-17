@@ -1,0 +1,183 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "claude-code"
+name = "Claude Code"
+vendor = "Anthropic"
+kind = "cli"
+status = "active"
+hints.show = "/context (Memory files), /memory, /status, claude --debug, /doctor prompt-audit"
+shows_loaded = "`/context` lists the loaded files under Memory files; `/memory` lists their locations; `/status` carries the length warning"
+
+[detect]
+paths = ["~/.claude", "~/.claude.json"]
+binaries = ["claude"]
+
+[warn]
+amount = 40000
+unit = "chars"
+[warn.source]
+kind = "observed"
+url = "https://github.com/anthropics/claude-code/issues/56406"
+read_on = 2026-10-17
+quote = "This threshold appears to be hardcoded -- no `settings.json` key, env var, or CLI flag controls it."
+note = "the documentation says a warning appears above a recommended length and a combined limit, without numbers; the 40,000-character figure comes from the issue tracker (closed not-planned, 2026-06-02)"
+
+[recommended]
+lines = 200
+[recommended.source]
+kind = "documentation"
+url = "https://code.claude.com/docs/en/memory"
+read_on = 2026-10-17
+quote = "Size: target under 200 lines per CLAUDE.md file. Longer files consume more context and reduce adherence."
+
+[composition]
+text = "All files are concatenated, filesystem root down to the working directory; within a directory CLAUDE.local.md after CLAUDE.md; user rules before project rules; nothing overrides anything."
+[composition.source]
+kind = "documentation"
+url = "https://code.claude.com/docs/en/memory"
+read_on = 2026-10-17
+quote = "All discovered files are concatenated into context rather than overriding each other. Across the directory tree, content is ordered from the filesystem root down to your working directory."
+
+# ---- system ------------------------------------------------------------------------------
+
+[[locations]]
+scope = "system"
+format = "markdown"
+kind = "main"
+order = 0
+strips_html_comments = true
+max_file_bytes = 4194304
+path.linux = "/etc/claude-code/CLAUDE.md"
+path.macos = "/Library/Application Support/ClaudeCode/CLAUDE.md"
+path.windows = "C:/Program Files/ClaudeCode/CLAUDE.md"
+imports = { syntax = "@", depth = 4, relative_to = "file", quoted_not_imported = true }
+[locations.source]
+kind = "documentation"
+url = "https://code.claude.com/docs/en/memory"
+read_on = 2026-10-17
+quote = "macOS: /Library/Application Support/ClaudeCode/CLAUDE.md • Linux and WSL: /etc/claude-code/CLAUDE.md • Windows: C:\\Program Files\\ClaudeCode\\CLAUDE.md"
+note = "a managed `claudeMd` key inside managed-settings.json is not a file on disk: not read here"
+
+# ---- user --------------------------------------------------------------------------------
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 10
+strips_html_comments = true
+max_file_bytes = 4194304
+path.any = "~/.claude/CLAUDE.md"
+imports = { syntax = "@", depth = 4, relative_to = "file", quoted_not_imported = true }
+[locations.source]
+kind = "documentation"
+url = "https://code.claude.com/docs/en/memory"
+read_on = 2026-10-17
+quote = "User | ~/.claude/CLAUDE.md"
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "rules"
+order = 11
+strips_html_comments = true
+max_file_bytes = 4194304
+path.any = "~/.claude/rules/**/*.md"
+imports = { syntax = "@", depth = 4, relative_to = "file", quoted_not_imported = true }
+frontmatter = { fields = ["paths"], glob_fields = ["paths"], conditional_when = ["paths"], on_invalid = "everywhere" }
+[locations.source]
+kind = "documentation"
+url = "https://code.claude.com/docs/en/memory"
+read_on = 2026-10-17
+quote = "Personal rules in ~/.claude/rules/ apply to every project on your machine."
+note = "`paths` is the only field Claude Code reads from a rule; any other field is ignored without an error"
+
+# ---- project -----------------------------------------------------------------------------
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 20
+nested = "on-demand"
+strips_html_comments = true
+max_file_bytes = 4194304
+path.any = ["CLAUDE.md", ".claude/CLAUDE.md"]
+imports = { syntax = "@", depth = 4, relative_to = "file", quoted_not_imported = true }
+[locations.source]
+kind = "documentation"
+url = "https://code.claude.com/docs/en/memory"
+read_on = 2026-10-17
+quote = "Project | ./CLAUDE.md or ./.claude/CLAUDE.md"
+note = "subdirectory files load once Claude reads, writes or edits a file in that subdirectory"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "local"
+order = 21
+nested = "on-demand"
+strips_html_comments = true
+max_file_bytes = 4194304
+path.any = "CLAUDE.local.md"
+imports = { syntax = "@", depth = 4, relative_to = "file", quoted_not_imported = true }
+[locations.source]
+kind = "documentation"
+url = "https://code.claude.com/docs/en/memory"
+read_on = 2026-10-17
+quote = "Local | ./CLAUDE.local.md … It loads alongside CLAUDE.md and is treated the same way. Add CLAUDE.local.md to your .gitignore"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 22
+strips_html_comments = true
+max_file_bytes = 4194304
+path.any = ".claude/rules/**/*.md"
+imports = { syntax = "@", depth = 4, relative_to = "file", quoted_not_imported = true }
+frontmatter = { fields = ["paths"], glob_fields = ["paths"], conditional_when = ["paths"], on_invalid = "everywhere" }
+[locations.source]
+kind = "documentation"
+url = "https://code.claude.com/docs/en/memory"
+read_on = 2026-10-17
+quote = "Place markdown files in your project's .claude/rules/ directory. … All .md files are discovered recursively"
+note = "a rule without `paths` loads at launch with the same priority as .claude/CLAUDE.md; invalid YAML → the rule loads as if it had no `paths`"
+
+# AGENTS.md: read only when no CLAUDE.md sits in the working directory or above it
+# (default setting `claude-md-or-agents-md`; v2.1.277+).
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 23
+nested = "on-demand"
+strips_html_comments = true
+max_file_bytes = 4194304
+path.any = ["AGENTS.md", ".claude/AGENTS.md"]
+only_if_absent = ["CLAUDE.md", ".claude/CLAUDE.md", "CLAUDE.local.md"]
+only_if_absent_in_ancestors = true
+imports = { syntax = "@", depth = 4, relative_to = "file", quoted_not_imported = true }
+note = "With the default Project instructions setting; `claude-md-and-agents-md` reads both."
+[locations.source]
+kind = "documentation"
+url = "https://code.claude.com/docs/en/memory"
+read_on = 2026-10-17
+quote = "By default, Claude reads AGENTS.md only when you have no CLAUDE.md in your working directory or above it."
+
+# ---- never read --------------------------------------------------------------------------
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "ignored"
+order = 90
+path.any = ["AGENTS.local.md", "AGENTS.override.md", ".agents/**/*.md"]
+note = "Claude Code does not read AGENTS.local.md, AGENTS.override.md or anything under .agents/; put the instructions in CLAUDE.md or CLAUDE.local.md."
+replaced_by = "CLAUDE.local.md"
+[locations.source]
+kind = "documentation"
+url = "https://code.claude.com/docs/en/memory"
+read_on = 2026-10-17
+quote = "AGENTS.local.md, AGENTS.override.md, or anything under a .agents/ directory"

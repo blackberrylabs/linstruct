@@ -1,0 +1,28 @@
+[workspace]
+resolver = "2"
+members = ["crates/core", "crates/cli", "crates/app"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Alexandre Do"]
+repository = "https://github.com/blackberrylabs/linstruct"
+
+[workspace.dependencies]
+# The Blackberrylabs foundations, by tag.
+bbl-hostrules = { git = "https://github.com/blackberrylabs/bbl-hostrules", tag = "v0.4.0" }
+bbl-report = { git = "https://github.com/blackberrylabs/bbl-report", tag = "v0.1.0" }
+bbl-ui = { git = "https://github.com/blackberrylabs/bbl-ui", tag = "v0.1.0" }
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+tempfile = "3"
+regex = "1"
+glob = "0.3"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

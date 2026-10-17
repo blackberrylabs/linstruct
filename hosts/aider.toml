@@ -1,0 +1,63 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "aider"
+name = "Aider"
+vendor = "Aider AI"
+kind = "cli"
+status = "active"
+hints.show = "aider, then /ls and /tokens"
+shows_loaded = "`/ls` lists the files in the chat (read-only ones included); `/tokens` reports their cost; `aider --verbose` prints the config files found"
+
+[detect]
+paths = ["~/.aider.conf.yml", "~/.aider"]
+binaries = ["aider"]
+
+[composition]
+text = "Aider loads no instruction file by itself: the `read:` entries of .aider.conf.yml (home, then git root, then current directory — the last loaded wins) are added to the chat as read-only files, in full."
+[composition.source]
+kind = "documentation"
+url = "https://aider.chat/docs/config/aider_conf.html"
+read_on = 2026-10-17
+quote = "If the files above exist, they will be loaded in that order. Files loaded last will take priority."
+
+[[locations]]
+scope = "user"
+format = "yaml"
+kind = "config"
+order = 0
+path.any = "~/.aider.conf.yml"
+config = { list_key = "read", relative_to = "file" }
+[locations.source]
+kind = "documentation"
+url = "https://aider.chat/docs/config/aider_conf.html"
+read_on = 2026-10-17
+quote = "read: [CONVENTIONS.md, anotherfile.txt, thirdfile.py]"
+note = "`read` may be a string or a list; a directory entry is expanded recursively by the source (main.py:681-687), which the docs do not say"
+
+[[locations]]
+scope = "project"
+format = "yaml"
+kind = "config"
+order = 10
+path.any = ".aider.conf.yml"
+config = { list_key = "read", relative_to = "project" }
+[locations.source]
+kind = "documentation"
+url = "https://aider.chat/docs/usage/conventions.html"
+read_on = 2026-10-17
+quote = "You can also configure aider to always load your conventions file"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "ignored"
+order = 90
+path.any = ["AGENTS.md", "CONVENTIONS.md", "CLAUDE.md"]
+note = "Aider reads no instruction file on its own; a conventions file counts only when listed under `read:` in .aider.conf.yml or passed with --read."
+replaced_by = "read: [AGENTS.md] in .aider.conf.yml"
+[locations.source]
+kind = "documentation"
+url = "https://aider.chat/docs/usage/conventions.html"
+read_on = 2026-10-17
+quote = "It's best to load the conventions file with /read CONVENTIONS.md or aider --read CONVENTIONS.md."

@@ -1,0 +1,64 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "trae"
+name = "Trae"
+vendor = "ByteDance"
+kind = "ide"
+status = "active"
+hints.show = "Settings > Rules & Memories"
+shows_loaded = "Not documented; the Rules & Memories settings hold the toggles for AGENTS.md / CLAUDE.md import"
+
+[detect]
+paths = ["~/.trae", "~/.trae-cn", "~/.config/Trae"]
+binaries = ["trae"]
+
+[composition]
+text = "User rules, then the project rules of .trae/rules/ (recursively, three levels at most) by application mode (always, glob, intelligent, manual), plus AGENTS.md / CLAUDE.md / CLAUDE.local.md from the root when enabled; subdirectory rule folders apply when files there are touched."
+[composition.source]
+kind = "documentation"
+url = "https://docs.trae.ai/ide/rules?_lang=en"
+read_on = 2026-10-17
+quote = "You can configure two types of rules: user rules and project rules."
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "rules"
+order = 0
+path.any = ["~/.trae/user_rules/*.md", "~/.trae-cn/user_rules/*.md", "~/.trae/user_rules", "~/.trae-cn/user_rules"]
+dir_ok = true
+[locations.source]
+kind = "documentation"
+url = "https://docs.trae.ai/ide/rules?_lang=en"
+read_on = 2026-10-17
+quote = "Global rules: macOS/Linux: ~/.trae/user_rules under the local home directory."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "rules"
+order = 10
+nested = "conditional"
+max_depth = 3
+path.any = ".trae/rules/**/*.md"
+frontmatter = { fields = ["alwaysApply", "globs", "description", "scene"], glob_fields = ["globs"], always_when = ["alwaysApply=true"], conditional_when = ["globs", "description"] }
+[locations.source]
+kind = "documentation"
+url = "https://docs.trae.ai/ide/rules?_lang=en"
+read_on = 2026-10-17
+quote = "You can create subfolders under the .trae/rules/ directory … The system will automatically read the rules in these directories recursively. Currently, up to three levels of nesting are supported."
+note = "modes: always (alwaysApply: true), glob (globs, comma-separated), intelligent (description), manual (#Rule); scene: git_message for commit messages"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 11
+path.any = ["AGENTS.md", "CLAUDE.md", "CLAUDE.local.md"]
+[locations.source]
+kind = "documentation"
+url = "https://docs.trae.ai/ide/rules?_lang=en"
+read_on = 2026-10-17
+quote = "Once enabled, the agent will read the CLAUDE.md and CLAUDE.local.md files in the root directory and add them to the context."
+note = "read only when the toggles are on in Settings > Rules & Memories; AGENTS.md must be placed in the project root by hand"

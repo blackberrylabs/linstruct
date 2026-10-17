@@ -1,0 +1,80 @@
+# Linstruct host sheet. Read by the scan, never written. Every claim names its source.
+# Schema: docs/hosts.md.
+
+id = "amp"
+name = "Amp"
+vendor = "Sourcegraph"
+kind = "cli"
+status = "active"
+hints.show = "Settings → Instructions → Global AGENTS.md"
+shows_loaded = "Not documented; personal guidance is editable under Settings → Instructions"
+
+[detect]
+paths = ["~/.config/amp", "~/.local/share/amp"]
+binaries = ["amp"]
+
+[composition]
+text = "Workspace guidance first, then personal and repository guidance: the AGENTS.md of the working directory and its parents up to $HOME at every session, subtree files when a file in them is read; nested files add up."
+[composition.source]
+kind = "documentation"
+url = "https://ampcode.com/docs/customize/agents-md"
+read_on = 2026-10-17
+quote = "Amp includes workspace guidance before personal and repository guidance."
+
+[[locations]]
+scope = "system"
+format = "markdown"
+kind = "main"
+order = 0
+path.linux = "/etc/ampcode/AGENTS.md"
+path.macos = "/Library/Application Support/ampcode/AGENTS.md"
+path.windows = "%ProgramData%/ampcode/AGENTS.md"
+imports = { syntax = "@", depth = 0, relative_to = "file" }
+[locations.source]
+kind = "documentation"
+url = "https://ampcode.com/docs/customize/agents-md"
+read_on = 2026-10-17
+quote = "System-wide or organization-managed guidance for all Amp sessions"
+
+[[locations]]
+scope = "user"
+format = "markdown"
+kind = "main"
+order = 1
+path.any = ["~/.config/amp/AGENTS.md", "~/.config/AGENTS.md"]
+imports = { syntax = "@", depth = 0, relative_to = "file" }
+[locations.source]
+kind = "documentation"
+url = "https://ampcode.com/docs/customize/agents-md"
+read_on = 2026-10-17
+quote = "both $HOME/.config/amp/AGENTS.md and $HOME/.config/AGENTS.md, are always included if they exist."
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 10
+nested = "on-demand"
+path.any = "AGENTS.md"
+imports = { syntax = "@", depth = 0, relative_to = "file" }
+[locations.source]
+kind = "documentation"
+url = "https://ampcode.com/docs/customize/agents-md"
+read_on = 2026-10-17
+quote = "AGENTS.md files in the current working directory (or editor workspace roots) and parent directories (up to $HOME) are always included."
+note = "Subtree AGENTS.md files are included when the agent reads a file in the subtree; @-mentions support relative, absolute and ~ paths and globs, and are ignored in code blocks; AMP_IGNORE_GUIDANCE_FILES skips files by glob"
+
+[[locations]]
+scope = "project"
+format = "markdown"
+kind = "main"
+order = 11
+nested = "on-demand"
+path.any = ["AGENT.md", "CLAUDE.md"]
+only_if_absent = ["AGENTS.md"]
+imports = { syntax = "@", depth = 0, relative_to = "file" }
+[locations.source]
+kind = "documentation"
+url = "https://ampcode.com/docs/customize/agents-md"
+read_on = 2026-10-17
+quote = "If no AGENTS.md exists in a directory, but a file named AGENT.md (without an S) or CLAUDE.md does exist, that file will be included."
