@@ -81,6 +81,15 @@ host rule cites its source, its date and the words it was read from (`docs/hosts
 `#![forbid(unsafe_code)]`; `tests/promises.rs` checks the source for writes and network calls
 and the report for conformance.
 
+## Part of Blackberrylabs
+
+Linstruct is a module of the [Blackberrylabs](https://github.com/blackberrylabs) family —
+read-only tools that show what AI coding agents do to your machine. Want only Linstruct?
+It is complete on its own. Want several? The
+[control tower](https://github.com/blackberrylabs/blackberrylabs) gathers what every
+module finds in one list, most serious first: `linstruct report` is what it reads, `linstruct-app --select`
+is how it opens Linstruct at a finding.
+
 ## Build
 
 ```sh
