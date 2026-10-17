@@ -8,8 +8,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use iced::widget::{
-    button, checkbox, column, container, horizontal_space, mouse_area, progress_bar, row,
-    scrollable, text, text_input, Space,
+    button, checkbox, column, container, horizontal_space, mouse_area, pick_list, progress_bar,
+    row, scrollable, text, text_input, Space,
 };
 use iced::{Alignment, Background, Border, Color, Element, Length, Task, Theme};
 
@@ -18,7 +18,7 @@ use bbl_ui::palette::{alert, amber, good, muted};
 use bbl_ui::widgets::{card, inner, kpi, pill, small_button, swatch};
 use bbl_ui::{Lang, Prefs, Strings};
 use linstruct_core::model::{Finding, HostStatus, Inventory, Kind, SlotState, Stack};
-use linstruct_core::scan::{display_home, rel_plain};
+use linstruct_core::scan::{display_home, rel, rel_plain};
 
 const EN: &str = include_str!("../../../locales/en.json");
 const FR: &str = include_str!("../../../locales/fr.json");
@@ -45,13 +45,24 @@ enum Message {
     ToggleWhatIf(bool),
     ExpandHost(String),
     Search(String),
+    NewFolder(String),
+    AddFolder,
+    RemoveFolder(String),
     OpenFile(String),
     OpenUrl(String),
     Copy(String),
 }
 
+/// What Linstruct adds to the shared preferences file: the folders where projects live
+/// (decision L5), as written (`~/Bureau/Projets`).
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+struct Extra {
+    #[serde(default)]
+    project_dirs: Vec<String>,
+}
+
 struct App {
-    prefs: Prefs<()>,
+    prefs: Prefs<Extra>,
     lang: Lang,
     strings: Strings,
     dark: bool,
@@ -67,11 +78,12 @@ struct App {
     show_what_if: bool,
     expanded: HashSet<String>,
     search: String,
+    new_folder: String,
 }
 
 impl App {
     fn new() -> (App, Task<Message>) {
-        let prefs: Prefs<()> = Prefs::load("linstruct");
+        let prefs: Prefs<Extra> = Prefs::load("linstruct");
         let lang = prefs.initial_lang();
         let dark = prefs.initial_dark();
         let strings = Strings::load(EN, FR, lang);
@@ -100,6 +112,7 @@ impl App {
                 show_what_if: false,
                 expanded: HashSet::new(),
                 search: String::new(),
+                new_folder: String::new(),
             },
             task,
         )
@@ -177,6 +190,40 @@ impl App {
                 }
             }
             Message::Search(s) => self.search = s,
+            Message::NewFolder(s) => self.new_folder = s,
+            Message::AddFolder => {
+                let typed = self.new_folder.trim().to_string();
+                if typed.is_empty() {
+                    return Task::none();
+                }
+                let path = if let Some(rest) = typed.strip_prefix("~/") {
+                    self.home.join(rest)
+                } else {
+                    PathBuf::from(&typed)
+                };
+                if !path.is_dir() {
+                    // not a folder: keep the text so the person can fix it
+                    return Task::none();
+                }
+                let abs = std::fs::canonicalize(&path).unwrap_or(path);
+                let shown = display_home(&abs, &self.home);
+                if !self.prefs.extra.project_dirs.contains(&shown) {
+                    self.prefs.extra.project_dirs.push(shown);
+                    self.prefs.save();
+                }
+                self.new_folder.clear();
+                self.loading = true;
+                return load(self.home.clone(), self.roots.clone());
+            }
+            Message::RemoveFolder(d) => {
+                self.prefs.extra.project_dirs.retain(|x| x != &d);
+                self.prefs.save();
+                if self.project_filter.is_some() {
+                    self.project_filter = None;
+                }
+                self.loading = true;
+                return load(self.home.clone(), self.roots.clone());
+            }
             Message::OpenFile(p) | Message::OpenUrl(p) => {
                 // the one thing the app launches: the system opener, on a path or a URL —
                 // never a command of ours
@@ -294,7 +341,9 @@ impl App {
             theme_label,
             Message::ToggleTheme,
         );
-        let mut col = column![self.view_header(inv)].spacing(12).padding(14);
+        let mut col = column![self.view_header(inv), self.view_folders(inv)]
+            .spacing(12)
+            .padding(14);
         if let Some(i) = inv {
             col = col.push(self.view_kpis(i));
         }
@@ -359,33 +408,6 @@ impl App {
                 }
             }
         };
-        let mut chips = row![].spacing(4).align_y(Alignment::Center);
-        if let Some(i) = inv {
-            if i.projects.len() > 1 {
-                chips = chips.push(chip(
-                    s.t("list.all", &[]),
-                    self.project_filter.is_none(),
-                    Message::FilterProject(None),
-                ));
-                for p in i.projects.iter().take(4) {
-                    chips = chips.push(chip(
-                        display_home(p, &i.home),
-                        self.project_filter.as_ref() == Some(p),
-                        Message::FilterProject(Some(p.clone())),
-                    ));
-                }
-                if i.projects.len() > 4 {
-                    chips = chips.push(
-                        text(s.t(
-                            "header.more_projects",
-                            &[("n", &(i.projects.len() - 4).to_string())],
-                        ))
-                        .size(11)
-                        .style(text::secondary),
-                    );
-                }
-            }
-        }
         let when = if self.loading {
             s.t("header.scanning", &[])
         } else {
@@ -407,13 +429,75 @@ impl App {
         row![
             sentence,
             horizontal_space(),
-            chips,
             text(when).size(12).style(text::secondary),
             rescan
         ]
         .spacing(10)
         .align_y(Alignment::Center)
         .into()
+    }
+
+    /// The folders where projects live: remembered chips with a cross, a field to add one,
+    /// and how many projects came out of them (decision L5).
+    fn view_folders(&self, inv: Option<&Inventory>) -> Element<'_, Message> {
+        let s = &self.strings;
+        let mut r = row![text(s.t("folders.label", &[]))
+            .size(12)
+            .style(text::secondary)]
+        .spacing(6)
+        .align_y(Alignment::Center);
+        if self.roots.is_empty() {
+            for d in &self.prefs.extra.project_dirs {
+                let d2 = d.clone();
+                r = r.push(
+                    row![
+                        text(d.clone()).size(11),
+                        button(text("×").size(11))
+                            .padding([0, 5])
+                            .style(button::text)
+                            .on_press(Message::RemoveFolder(d2)),
+                    ]
+                    .spacing(2)
+                    .align_y(Alignment::Center),
+                );
+            }
+            r = r.push(
+                text_input(&s.t("folders.placeholder", &[]), &self.new_folder)
+                    .on_input(Message::NewFolder)
+                    .on_submit(Message::AddFolder)
+                    .size(11)
+                    .padding(4)
+                    .width(Length::Fixed(220.0)),
+            );
+            r = r.push(small_button(s.t("folders.add", &[]), Message::AddFolder));
+        } else {
+            r = r.push(
+                text(s.t("folders.from_args", &[("n", &self.roots.len().to_string())])).size(11),
+            );
+        }
+        if let Some(i) = inv {
+            r = r.push(horizontal_space());
+            r = r.push(
+                text(s.t("folders.projects", &[("n", &i.projects.len().to_string())]))
+                    .size(11)
+                    .style(text::secondary),
+            );
+        }
+        container(r)
+            .padding([4, 8])
+            .width(Length::Fill)
+            .style(|theme: &Theme| {
+                let p = theme.extended_palette();
+                container::Style {
+                    border: Border {
+                        radius: 8.0.into(),
+                        width: 1.0,
+                        color: p.background.strong.color,
+                    },
+                    ..Default::default()
+                }
+            })
+            .into()
     }
 
     fn view_kpis(&self, inv: &Inventory) -> Element<'_, Message> {
@@ -673,7 +757,11 @@ impl App {
         };
         for (st, sl) in slots.iter().take(shown) {
             let f = &inv.files[sl.file];
-            let path = rel_plain(&f.path, st.project.as_deref(), &inv.home);
+            let path = if inv.projects.len() > 1 {
+                rel(&f.path, st.project.as_deref(), &inv.home)
+            } else {
+                rel_plain(&f.path, st.project.as_deref(), &inv.home)
+            };
             let (state, color) = self.slot_state(sl, f);
             let state_el: Element<'_, Message> = match &sl.state {
                 SlotState::Loaded => text(state).size(11).style(text::secondary).into(),
@@ -800,11 +888,41 @@ impl App {
                 Message::FilterHost(Some(h.id.clone())),
             ));
         }
+        let all_label = s.t("list.all_projects", &[]);
+        let mut project_names: Vec<String> = vec![all_label.clone()];
+        project_names.extend(inv.projects.iter().map(|p| display_home(p, &inv.home)));
+        let selected_project = self
+            .project_filter
+            .as_ref()
+            .map(|p| display_home(p, &inv.home))
+            .unwrap_or_else(|| all_label.clone());
+        let projects = inv.projects.clone();
+        let home = inv.home.clone();
+        let picker: Element<'_, Message> = if inv.projects.len() > 1 {
+            pick_list(
+                project_names,
+                Some(selected_project),
+                move |name: String| {
+                    Message::FilterProject(
+                        projects
+                            .iter()
+                            .find(|p| display_home(p, &home) == name)
+                            .cloned(),
+                    )
+                },
+            )
+            .text_size(11)
+            .padding(4)
+            .into()
+        } else {
+            Space::with_width(0).into()
+        };
         let filters = column![
             scrollable(chips).direction(scrollable::Direction::Horizontal(
                 scrollable::Scrollbar::new().width(0).scroller_width(0)
             )),
             row![
+                picker,
                 text_input(&s.t("list.search", &[]), &self.search)
                     .on_input(Message::Search)
                     .size(12)
@@ -1194,7 +1312,10 @@ fn load(home: PathBuf, roots: Vec<PathBuf>) -> Task<Message> {
             .collect();
         if !roots.is_empty() {
             env = env.with_roots(roots);
-        } else if bbl_hostrules::resolve::project_roots(&env).is_empty() {
+        } else if linstruct_core::projects::default_roots(&env, &linstruct_core::rules::embedded())
+            .is_empty()
+        {
+            // no remembered folder, no project known: the current directory
             if let Ok(cwd) = std::env::current_dir() {
                 env = env.with_roots(vec![cwd]);
             }

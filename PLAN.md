@@ -24,18 +24,23 @@
 - [x] Passage réel sur la machine d'Alexandre : 4 hôtes, 29 projets, 19 constats justes
 - [x] Commit 2 : sujets et identifiants qualifiés par le projet, ombre évaluée au dossier
       courant, `-p` à plusieurs dossiers
-- [ ] L5 — d'où viennent les projets par défaut (réglage mémorisé ou découverte git)
+- [x] L5 — dossiers de projets mémorisés (`settings.json`) + projets de `~/.claude.json` ;
+      `linstruct folders add|remove`, barre « Project folders » dans l'app (commit 3)
 
 ## Étape 2. Maquette validée, puis app
 - [x] Maquette A1 (trois colonnes : piles par hôte avec jauge, constats, détail sourcé)
-- [ ] Validation d'Alexandre
-- [ ] App iced sur bbl-ui ; `--select <finding-id>` ; « what if » repliés ; EN/FR
+- [x] Validation d'Alexandre (maquette A1 ; « what if », go)
+- [x] App iced sur bbl-ui ; `--select <finding-id>` ; « what if » repliés ; EN/FR ;
+      sélecteur de projet ; barre des dossiers
 
-## Étape 3. Paquets, dépôt, release 0.1.0 — sur accord
-- [ ] `packaging/build.sh` (.deb, .rpm, AppImage), icône, .desktop
-- [ ] Dépôt `blackberrylabs/linstruct`, push, release (module d'abord)
-- [ ] Tour : `modules/linstruct.toml`, fixture `tests/fixtures/reports/linstruct.json`, release
-- [ ] Docs des 9 dépôts, profil de l'organisation, `00_moi/PROJETS.md`
+## Étape 3. Paquets, dépôt, release 0.1.0 — validé (« Je valide. Go. »)
+- [x] Icône (page coupée, œil vert), .desktop, métadonnées .deb/.rpm
+- [x] Dépôt `blackberrylabs/linstruct` en ligne (commits 1 et 2)
+- [ ] `packaging/build.sh` sur la machine d'Alexandre → `dist/`
+- [ ] Tag v0.1.0, release GitHub avec `00_cadrage/release_v0.1.0.md` ; vérification depuis
+      l'extérieur (somme, version, `report` conforme)
+- [ ] Tour 0.2.0 : `modules/linstruct.toml`, fixture, README, docs ; release après le module
+- [ ] Profil de l'organisation, gabarit (`docs/new-module.md` déjà à jour), `00_moi/PROJETS.md`
 
 ## Après 0.1.0
 - Hôtes `not_read` : Antigravity CLI, Factory, Augment (fiches quand les sources existent)

@@ -96,5 +96,11 @@
   "about.notes": "Notes of this scan",
   "status.ready": "{files} file(s) · {hosts} host(s) present · {findings} finding(s) · nothing has been written",
   "theme.dark": "Dark",
-  "theme.light": "Light"
+  "theme.light": "Light",
+  "folders.label": "Project folders:",
+  "folders.placeholder": "~/code — a folder where your projects live",
+  "folders.add": "Add",
+  "folders.from_args": "{n} folder(s) given on the command line",
+  "folders.projects": "{n} project(s), with those Claude Code knows",
+  "list.all_projects": "All projects"
 }

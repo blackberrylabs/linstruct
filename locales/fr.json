@@ -96,5 +96,11 @@
   "about.notes": "Notes de cette lecture",
   "status.ready": "{files} fichier(s) · {hosts} hôte(s) présent(s) · {findings} constat(s) · rien n'a été écrit",
   "theme.dark": "Sombre",
-  "theme.light": "Clair"
+  "theme.light": "Clair",
+  "folders.label": "Dossiers de projets :",
+  "folders.placeholder": "~/code — un dossier où vivent vos projets",
+  "folders.add": "Ajouter",
+  "folders.from_args": "{n} dossier(s) donnés en ligne de commande",
+  "folders.projects": "{n} projet(s), avec ceux que connaît Claude Code",
+  "list.all_projects": "Tous les projets"
 }

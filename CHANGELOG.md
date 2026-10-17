@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.0] — 2026-10-17
 
 ### Added
 
@@ -22,5 +22,8 @@
 - `linstruct` (findings), `linstruct stacks` (what each host loads, with its budget),
   `linstruct hosts` (presence and sources), `linstruct report` (`bbl-report/1`, hosts present
   on the machine only), `--json`, `--home`, `--host`, `--all-hosts`, `-p <dir>`.
+- Projects come from the folders you remember (`linstruct folders add <dir>`, or the app's
+  "Project folders" bar) plus the projects Claude Code knows; `-p <dir>…` overrides. The
+  remembered folders live in `~/.config/linstruct/settings.json`, the only file written.
 - Started from the Blackberrylabs module template; `bbl-hostrules` 0.4.0 for the locations,
   the readers and the secret masking.

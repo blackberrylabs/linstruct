@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 
 use bbl_hostrules::env::Env;
 use bbl_hostrules::read::{get, read_tree};
-use bbl_hostrules::resolve::{expand_glob, project_roots, resolve};
+use bbl_hostrules::resolve::{expand_glob, resolve};
 use bbl_hostrules::rules::{Scope, Source};
 use serde_json::Value;
 
@@ -40,15 +40,23 @@ const MAX_WALK_DEPTH: usize = 8;
 const MAX_PROJECT_FILES: usize = 50_000;
 const MIN_PARAGRAPH: usize = 60;
 
-/// Scan with the embedded sheets. Project roots: the environment's, else the projects the
-/// machine knows (`bbl_hostrules::resolve::project_roots`).
+/// Scan with the embedded sheets. Project roots: the environment's when given, else the
+/// remembered folders and the projects the machine knows (`projects::default_roots`).
 pub fn scan(env: &Env) -> Inventory {
     scan_with(env, &rules::embedded())
 }
 
 pub fn scan_with(env: &Env, sheets: &Sheets) -> Inventory {
-    let mut roots = project_roots(env);
+    // explicit roots (`-p`, the app's arguments) are taken as they are; otherwise the
+    // remembered folders and the projects Claude Code knows (decision L5)
+    let mut roots: Vec<PathBuf> = if env.roots.is_empty() {
+        crate::projects::default_roots(env, sheets)
+    } else {
+        env.roots.clone()
+    };
     roots.retain(|r| r.is_dir());
+    roots.sort();
+    roots.dedup();
     let mut s = Scanner::new(env, sheets, roots);
     s.run();
     s.finish()

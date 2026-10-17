@@ -11,6 +11,7 @@
 #![forbid(unsafe_code)]
 
 pub mod model;
+pub mod projects;
 pub mod report;
 pub mod rules;
 pub mod scan;

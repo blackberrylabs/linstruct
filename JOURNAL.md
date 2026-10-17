@@ -3,6 +3,33 @@
 
 ---
 
+## 2026-10-17 — vers la 0.1.0
+
+- Alexandre : « Je valide. Go. » pour la release. CHANGELOG daté, README en 0.1.0, notes de
+  release écrites ; fiche `modules/linstruct.toml` et fixture (21 constats, chemins
+  `/home/me`) préparées pour la tour 0.2.0 — le module d'abord, la tour après (règle de la
+  famille).
+- Vu en préparant la fixture : avec `-p` à plusieurs dossiers, un sous-commande placée après
+  les chemins est avalée comme un chemin (`linstruct -p a b report`). Documenté : la
+  sous-commande d'abord (`linstruct report -p a b`).
+
+## 2026-10-17 — L5 : d'où viennent les projets
+
+- Décision **L5** (Alexandre : « Ok pour ta recommandation. Go. ») : dossiers de projets
+  mémorisés dans `~/.config/linstruct/settings.json` (clé `project_dirs`, à côté des
+  préférences de l'app — toujours le seul fichier écrit), plus les projets de
+  `~/.claude.json`, plus le dossier courant quand rien d'autre. Un dossier mémorisé est
+  lui-même un projet s'il porte un marqueur (`.git` ou un fichier lu à la racine par un hôte,
+  liste tirée des fiches), sinon chacun de ses sous-dossiers directs qui en porte un ; le home
+  n'est jamais un projet (`~/.claude/CLAUDE.md` est un fichier utilisateur).
+- Écarté : la découverte automatique des dépôts git sous le home (lente, surprenante) ; un
+  sélecteur de dossiers natif (`rfd` tire GTK dans l'app et le paquet) — l'app prend un chemin
+  tapé ou collé, `~/…` accepté, refusé silencieusement s'il n'existe pas.
+- CLI : `linstruct folders [add|remove <dir>…]` ; app : barre « Project folders » avec une
+  croix par dossier, sélecteur « All projects ▾ » dans les constats, chemins préfixés du nom
+  du projet dans les piles quand il y en a plusieurs. Preuve : 8 + 3 + 7 + 3 tests verts,
+  capture sur deux projets.
+
 ## 2026-10-17 — premier passage réel, commit 1 en ligne
 
 - Dépôt `blackberrylabs/linstruct` créé par Alexandre (`gh repo create`), commit 1 `3234f50`

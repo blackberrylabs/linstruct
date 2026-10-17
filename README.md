@@ -39,19 +39,31 @@ summary nor sent to the tower.
 
 ```sh
 linstruct                      # the findings, most serious first, for the projects your machine knows
-linstruct -p ~/code/myrepo     # one project
+linstruct -p ~/code/myrepo     # one project (several: -p ~/code/*; put a subcommand before -p)
 linstruct stacks               # what each host loads, file by file, with its budget
 linstruct stacks --host codex
 linstruct hosts                # the hosts, their presence, where their rules come from
+linstruct folders              # where your projects live (see below)
 linstruct --all-hosts          # include the hosts not on this machine
 linstruct --json               # everything, for scripts
 linstruct report               # bbl-report/1 for the Blackberrylabs control tower
 linstruct-app                  # the desktop app
 ```
 
-Projects: the ones you name with `-p`, else the projects Claude Code knows on this machine
-(`~/.claude.json`), else the current directory. The host's working directory is taken as the
-project root; files in subdirectories are shown as "on demand" or "when started there".
+Projects: the ones you name with `-p`; otherwise the **folders you remembered** plus the
+projects Claude Code knows on this machine (`~/.claude.json`); else the current directory.
+A remembered folder is a project itself when it carries a `.git` or an instruction file;
+otherwise each of its direct subfolders that does is one.
+
+```sh
+linstruct folders                       # the remembered folders and the projects they yield
+linstruct folders add ~/code ~/work     # remember folders (the app has the same, with a cross to forget)
+linstruct folders remove ~/work
+```
+
+This list lives in `~/.config/linstruct/settings.json`, next to the app's preferences — the
+only file Linstruct writes. The host's working directory is taken as the project root; files
+in subdirectories are shown as "on demand" or "when started there".
 
 ## What Linstruct does not do
 
@@ -83,4 +95,5 @@ tower's contract) and [`bbl-ui`](https://github.com/blackberrylabs/bbl-ui) (the 
 
 ## Status
 
-0.1.0 in preparation. License MIT — Alexandre Do.
+0.1.0 — first release. Packages (`.deb`, `.rpm`, AppImage, x86_64) on the
+[releases page](https://github.com/blackberrylabs/linstruct/releases). License MIT — Alexandre Do.

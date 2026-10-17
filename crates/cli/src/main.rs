@@ -3,7 +3,7 @@
 //! the Blackberrylabs control tower, always JSON), `--json` for scripts. Read-only.
 
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use bbl_hostrules::env::Env;
@@ -49,6 +49,20 @@ enum Command {
     /// The inventory as a `bbl-report/1` document for the Blackberrylabs control tower
     /// (always JSON, hosts present on this machine only).
     Report,
+    /// The folders Linstruct remembers as places where your projects live
+    /// (`~/.config/linstruct/settings.json`, the only file it writes).
+    Folders {
+        #[command(subcommand)]
+        action: Option<FoldersAction>,
+    },
+}
+
+#[derive(Subcommand)]
+enum FoldersAction {
+    /// Remember one or more folders.
+    Add { dirs: Vec<PathBuf> },
+    /// Forget one or more folders (the folders themselves are untouched).
+    Remove { dirs: Vec<PathBuf> },
 }
 
 fn main() -> Result<()> {
@@ -69,15 +83,19 @@ fn run() -> Result<()> {
         Some(h) => Env::fixture(h, bbl_hostrules::env::Os::Linux),
         None => Env::current(),
     };
+    if let Some(Command::Folders { action }) = &cli.command {
+        return folders(&mut std::io::stdout().lock(), &env, action.as_ref());
+    }
     let mut roots: Vec<PathBuf> = cli
         .paths
         .iter()
         .map(|p| std::fs::canonicalize(p).unwrap_or_else(|_| p.clone()))
         .collect();
     if roots.is_empty() && cli.home.is_none() {
-        // the projects the machine knows come from bbl-hostrules; the current directory
-        // is the fallback when it knows none
-        let known = bbl_hostrules::resolve::project_roots(&env);
+        // the remembered folders and the projects Claude Code knows (decision L5); the
+        // current directory is the fallback when there is none
+        let known =
+            linstruct_core::projects::default_roots(&env, &linstruct_core::rules::embedded());
         if known.is_empty() {
             if let Ok(cwd) = std::env::current_dir() {
                 roots.push(cwd);
@@ -101,6 +119,7 @@ fn run() -> Result<()> {
         Command::List => list(&mut out, &inv, cli.host.as_deref(), cli.all_hosts)?,
         Command::Stacks => stacks(&mut out, &inv, cli.host.as_deref(), cli.all_hosts)?,
         Command::Hosts => hosts(&mut out, &inv)?,
+        Command::Folders { .. } => unreachable!("handled before the scan"),
     }
     Ok(())
 }
@@ -263,5 +282,84 @@ fn hosts(out: &mut impl Write, inv: &Inventory) -> Result<()> {
     for n in &inv.not_read {
         writeln!(out, "not read: {} — {}", n.name, n.reason)?;
     }
+    Ok(())
+}
+
+/// `linstruct folders [add|remove <dir>…]`: the remembered folders, in the settings file.
+/// Writing is limited to the `project_dirs` key; the rest of the file is kept as it is.
+fn folders(out: &mut impl Write, env: &Env, action: Option<&FoldersAction>) -> Result<()> {
+    let path = linstruct_core::projects::settings_path(env);
+    let mut settings: serde_json::Value = std::fs::read_to_string(&path)
+        .ok()
+        .and_then(|t| serde_json::from_str(&t).ok())
+        .unwrap_or_else(|| serde_json::json!({}));
+    let mut dirs: Vec<String> = settings
+        .get("project_dirs")
+        .and_then(|v| v.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|x| x.as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_default();
+    let shown = |d: &Path| -> String {
+        let abs = std::fs::canonicalize(d).unwrap_or_else(|_| d.to_path_buf());
+        display_home(&abs, &env.home)
+    };
+    let changed = match action {
+        None => false,
+        Some(FoldersAction::Add { dirs: add }) => {
+            let mut changed = false;
+            for d in add {
+                if !d.is_dir() {
+                    writeln!(out, "not a directory, skipped: {}", d.display())?;
+                    continue;
+                }
+                let s = shown(d);
+                if !dirs.contains(&s) {
+                    dirs.push(s);
+                    changed = true;
+                }
+            }
+            changed
+        }
+        Some(FoldersAction::Remove { dirs: rm }) => {
+            let before = dirs.len();
+            let targets: Vec<String> = rm.iter().map(|d| shown(d)).collect();
+            dirs.retain(|d| !targets.contains(d) && !rm.iter().any(|r| r.to_string_lossy() == *d));
+            before != dirs.len()
+        }
+    };
+    if changed {
+        if let Some(dir) = path.parent() {
+            std::fs::create_dir_all(dir)?;
+        }
+        settings["project_dirs"] = serde_json::Value::Array(
+            dirs.iter()
+                .cloned()
+                .map(serde_json::Value::String)
+                .collect(),
+        );
+        std::fs::write(&path, serde_json::to_string_pretty(&settings)? + "\n")?;
+        writeln!(out, "saved to {}", display_home(&path, &env.home))?;
+    }
+    if dirs.is_empty() {
+        writeln!(out, "No folder remembered. `linstruct folders add <dir>` — each subfolder with a .git or an instruction file becomes a project.")?;
+    } else {
+        writeln!(
+            out,
+            "Remembered folders ({}):",
+            display_home(&path, &env.home)
+        )?;
+        for d in &dirs {
+            writeln!(out, "  {d}")?;
+        }
+    }
+    let roots = linstruct_core::projects::default_roots(env, &linstruct_core::rules::embedded());
+    writeln!(
+        out,
+        "{} project(s) found, with those Claude Code knows (~/.claude.json).",
+        roots.len()
+    )?;
     Ok(())
 }
