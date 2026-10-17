@@ -20,8 +20,11 @@
 - [x] `report.rs` : `bbl-report/1`, hôtes présents seulement (L4)
 - [x] CLI : `linstruct`, `stacks`, `hosts`, `report`, `--json`, `--home`, `--host`, `--all-hosts`, `-p`
 - [x] Tests : 6 text, 3 promesses, 6 scan sur un faux HOME (15 verts) ; clippy et fmt propres
-- [ ] Commit 1 (après le tag v0.4.0 de bbl-hostrules en ligne)
-- [ ] Passage réel sur la machine d'Alexandre (`linstruct`, `linstruct stacks`)
+- [x] Commit 1 `3234f50`, dépôt `blackberrylabs/linstruct` en ligne
+- [x] Passage réel sur la machine d'Alexandre : 4 hôtes, 29 projets, 19 constats justes
+- [x] Commit 2 : sujets et identifiants qualifiés par le projet, ombre évaluée au dossier
+      courant, `-p` à plusieurs dossiers
+- [ ] L5 — d'où viennent les projets par défaut (réglage mémorisé ou découverte git)
 
 ## Étape 2. Maquette validée, puis app
 - [x] Maquette A1 (trois colonnes : piles par hôte avec jauge, constats, détail sourcé)

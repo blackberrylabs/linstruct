@@ -9,7 +9,7 @@ use anyhow::Result;
 use bbl_hostrules::env::Env;
 use clap::{Parser, Subcommand};
 use linstruct_core::model::{Inventory, SlotState};
-use linstruct_core::scan::{display_home, rel};
+use linstruct_core::scan::{display_home, rel_plain};
 
 #[derive(Parser)]
 #[command(
@@ -20,7 +20,7 @@ use linstruct_core::scan::{display_home, rel};
 struct Cli {
     /// A project root to look at; repeatable (default: the projects this machine knows,
     /// else the current directory).
-    #[arg(short, long = "project", global = true, value_name = "DIR")]
+    #[arg(short, long = "project", global = true, value_name = "DIR", num_args = 1..)]
     paths: Vec<PathBuf>,
     /// Machine-readable output.
     #[arg(long, global = true)]
@@ -180,7 +180,11 @@ fn stacks(out: &mut impl Write, inv: &Inventory, host: Option<&str>, all: bool) 
                 format!("not on this machine ({})", h.presence)
             }
         )?;
-        for st in inv.stacks.iter().filter(|s| s.host == h.id) {
+        for st in inv
+            .stacks
+            .iter()
+            .filter(|s| s.host == h.id && !s.slots.is_empty())
+        {
             let label = match &st.project {
                 Some(p) => display_home(p, &inv.home),
                 None => "user level".into(),
@@ -215,7 +219,7 @@ fn stacks(out: &mut impl Write, inv: &Inventory, host: Option<&str>, all: bool) 
                     "    {:<10} {:>7} B  {:<34} {}",
                     s.role,
                     f.bytes,
-                    rel(&f.path, st.project.as_deref(), &inv.home),
+                    rel_plain(&f.path, st.project.as_deref(), &inv.home),
                     state
                 )?;
             }

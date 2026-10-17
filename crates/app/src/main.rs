@@ -18,7 +18,7 @@ use bbl_ui::palette::{alert, amber, good, muted};
 use bbl_ui::widgets::{card, inner, kpi, pill, small_button, swatch};
 use bbl_ui::{Lang, Prefs, Strings};
 use linstruct_core::model::{Finding, HostStatus, Inventory, Kind, SlotState, Stack};
-use linstruct_core::scan::{display_home, rel};
+use linstruct_core::scan::{display_home, rel_plain};
 
 const EN: &str = include_str!("../../../locales/en.json");
 const FR: &str = include_str!("../../../locales/fr.json");
@@ -673,7 +673,7 @@ impl App {
         };
         for (st, sl) in slots.iter().take(shown) {
             let f = &inv.files[sl.file];
-            let path = rel(&f.path, st.project.as_deref(), &inv.home);
+            let path = rel_plain(&f.path, st.project.as_deref(), &inv.home);
             let (state, color) = self.slot_state(sl, f);
             let state_el: Element<'_, Message> = match &sl.state {
                 SlotState::Loaded => text(state).size(11).style(text::secondary).into(),

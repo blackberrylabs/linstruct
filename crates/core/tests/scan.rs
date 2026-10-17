@@ -95,7 +95,15 @@ fn kinds(inv: &Inventory, host: &str) -> Vec<(Kind, String)> {
     inv.findings
         .iter()
         .filter(|f| f.host == host)
-        .map(|f| (f.kind, f.subject.clone()))
+        .map(|f| {
+            (
+                f.kind,
+                f.subject
+                    .strip_prefix("proj/")
+                    .unwrap_or(&f.subject)
+                    .to_string(),
+            )
+        })
         .collect()
 }
 
@@ -155,10 +163,10 @@ fn codex_cuts_at_the_configured_budget() {
     assert!(!cut.is_empty(), "{:#?}", kinds(&inv, "codex"));
     let root_cut = cut
         .iter()
-        .find(|f| f.subject == "AGENTS.md")
+        .find(|f| f.subject == "proj/AGENTS.md")
         .expect("root AGENTS.md is cut");
     assert!(
-        root_cut.title.contains("cuts `AGENTS.md` at line"),
+        root_cut.title.contains("cuts `proj/AGENTS.md` at line"),
         "{}",
         root_cut.title
     );
@@ -187,7 +195,7 @@ fn codex_cuts_at_the_configured_budget() {
     assert!(inv
         .findings
         .iter()
-        .any(|f| f.kind == Kind::Empty && f.subject == "empty/AGENTS.md"));
+        .any(|f| f.kind == Kind::Empty && f.subject == "proj/empty/AGENTS.md"));
     // Codex sends HTML comments... but it does not read CLAUDE.md, so no comments finding for it
     assert!(!kinds(&inv, "codex")
         .iter()
@@ -233,7 +241,7 @@ fn absent_hosts_are_what_if_only() {
         inv.findings.iter().filter(|f| f.host == "warp").collect();
     assert!(
         warp.iter()
-            .any(|f| f.kind == Kind::Ignored && f.subject == "agents.md"),
+            .any(|f| f.kind == Kind::Ignored && f.subject == "proj/agents.md"),
         "{warp:#?}"
     );
     assert!(warp.iter().all(|f| !f.present));
@@ -245,7 +253,7 @@ fn absent_hosts_are_what_if_only() {
     assert!(
         gemini
             .iter()
-            .any(|f| f.kind == Kind::Unreadable && f.subject == "GEMINI.md"),
+            .any(|f| f.kind == Kind::Unreadable && f.subject == "proj/GEMINI.md"),
         "{gemini:#?}"
     );
     // present findings first, then by severity
@@ -262,6 +270,25 @@ fn absent_hosts_are_what_if_only() {
     let report = linstruct_core::report::build(&inv, 1);
     assert_eq!(report.findings.len(), inv.present_findings().count());
     bbl_report::conformance::check(&report.to_json()).unwrap();
+}
+
+#[test]
+fn two_projects_with_the_same_file_names_keep_distinct_findings() {
+    let (tmp, proj) = fixture();
+    let other = tmp.path().join("other");
+    fs::create_dir_all(&other).unwrap();
+    fs::copy(proj.join("CLAUDE.md"), other.join("CLAUDE.md")).unwrap();
+    let env = Env::fixture(tmp.path(), Os::Linux).with_roots(vec![proj.clone(), other.clone()]);
+    let inv = linstruct_core::scan(&env);
+    let long: Vec<&linstruct_core::Finding> = inv
+        .findings
+        .iter()
+        .filter(|f| f.host == "claude-code" && f.kind == Kind::OverLength)
+        .collect();
+    assert_eq!(long.len(), 2, "{long:#?}");
+    assert!(long.iter().any(|f| f.subject == "proj/CLAUDE.md"));
+    assert!(long.iter().any(|f| f.subject == "other/CLAUDE.md"));
+    assert_ne!(long[0].id, long[1].id);
 }
 
 #[test]

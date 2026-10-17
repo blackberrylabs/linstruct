@@ -1009,21 +1009,27 @@ impl<'a> Scanner<'a> {
                 }
                 continue;
             }
-            // relative: the candidate's directory, then its ancestors up to the project root
-            let mut dir = Some(c.dir.as_path());
-            while let Some(d) = dir {
-                let p = d.join(pat);
+            if c.loc.ext.only_if_absent_in_ancestors {
+                // "in your working directory or above it": the project root (the working
+                // directory Linstruct assumes) and its ancestors, up to the home directory
+                let start = project.unwrap_or(c.dir.as_path());
+                let mut dir = Some(start);
+                while let Some(d) = dir {
+                    let p = d.join(pat);
+                    if exists_other(&p) {
+                        return Some(rel(&p, project, &self.env.home));
+                    }
+                    if d == self.env.home || d.parent().is_none() {
+                        break;
+                    }
+                    dir = d.parent();
+                }
+            } else {
+                // the candidate's own directory
+                let p = c.dir.join(pat);
                 if exists_other(&p) {
-                    return Some(if d == c.dir.as_path() {
-                        pat.clone()
-                    } else {
-                        rel(&p, project, &self.env.home)
-                    });
+                    return Some(rel(&p, project, &self.env.home));
                 }
-                if Some(d) == project || !c.loc.ext.only_if_absent_in_ancestors {
-                    break;
-                }
-                dir = d.parent();
             }
         }
         None
@@ -1760,12 +1766,18 @@ impl<'a> Scanner<'a> {
             .as_ref()
             .map(|p| rel(p, project, &self.env.home))
             .unwrap_or_else(|| host.name.clone());
-        let mut id = format!(
-            "{}/{}/{}",
-            kind.slug(),
-            host.id,
-            subject.trim_start_matches("~/").replace(' ', "_")
-        );
+        let id_path = match (&path, project) {
+            (Some(p), Some(root)) => format!(
+                "{}/{}",
+                display_home(root, &self.env.home).trim_start_matches("~/"),
+                rel_plain(p, project, &self.env.home)
+            ),
+            (Some(p), None) => display_home(p, &self.env.home)
+                .trim_start_matches("~/")
+                .to_string(),
+            (None, _) => host.name.clone(),
+        };
+        let mut id = format!("{}/{}/{}", kind.slug(), host.id, id_path.replace(' ', "_"));
         if let Some(s) = suffix {
             id.push('/');
             id.push_str(&s.replace(' ', "_"));
@@ -2017,7 +2029,29 @@ fn file_name(p: &Path) -> String {
 }
 
 /// Project-relative path, else `~/…`, else absolute.
+/// `<project name>/<path in the project>` for a project file, else `~/…`, else absolute.
+/// The project name keeps a finding readable when several projects are scanned.
 pub fn rel(path: &Path, project: Option<&Path>, home: &Path) -> String {
+    if let Some(root) = project {
+        if let Ok(r) = path.strip_prefix(root) {
+            let name = root
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| display_home(root, home));
+            let s = r.to_string_lossy().replace('\\', "/");
+            return if s.is_empty() {
+                name
+            } else {
+                format!("{name}/{s}")
+            };
+        }
+    }
+    display_home(path, home)
+}
+
+/// The path inside the project, without the project's name (the stacks view, where the
+/// project is the heading).
+pub fn rel_plain(path: &Path, project: Option<&Path>, home: &Path) -> String {
     if let Some(root) = project {
         if let Ok(r) = path.strip_prefix(root) {
             let s = r.to_string_lossy().replace('\\', "/");

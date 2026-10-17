@@ -3,6 +3,27 @@
 
 ---
 
+## 2026-10-17 — premier passage réel, commit 1 en ligne
+
+- Dépôt `blackberrylabs/linstruct` créé par Alexandre (`gh repo create`), commit 1 `3234f50`
+  poussé. bbl-hostrules 0.4.0 taguée et en ligne.
+- Passage réel sur la machine d'Alexandre : 4 hôtes présents (Claude Code, Cursor, Copilot via
+  l'extension VS Code, OpenCode), 49 fichiers dans 29 projets avec `-p ~/Bureau/Logiciels/*
+  ~/Bureau/Projets/*`, 19 constats — tous justes à la lecture : deux CLAUDE.md au-dessus de
+  200 lignes, un à 544 lignes (Cursor recommande 500), un commentaire HTML envoyé au modèle
+  par trois hôtes, 17 paragraphes répétés entre deux AGENTS.md d'un monorepo, un AGENTS.md
+  identique à `~/.config/opencode/AGENTS.md`.
+- Trois défauts vus et corrigés : (1) les identifiants et sujets ne portaient que le chemin
+  dans le projet → deux projets avec un `CLAUDE.md` se dédoublonnaient l'un l'autre ; le sujet
+  est maintenant `Projet/chemin`, l'identifiant porte le chemin du projet ; (2) l'ombre de
+  Claude Code (« AGENTS.md lu seulement sans CLAUDE.md dans le dossier courant ou au-dessus »)
+  était évaluée au dossier du fichier imbriqué au lieu du dossier courant — un monorepo avec
+  un `CLAUDE.md` dans un sous-dossier mettait à tort tous ses AGENTS.md dans l'ombre ; (3) `-p`
+  n'acceptait qu'un dossier par occurrence → `num_args = 1..`, le joker du shell marche.
+- Appris : par défaut Linstruct ne connaît que les projets de `~/.claude.json` (2 chez
+  Alexandre sur une trentaine). Décision L5 à prendre : dossiers de projets mémorisés dans
+  `~/.config/linstruct/settings.json`, ou découverte des dépôts git sous un dossier donné.
+
 ## 2026-10-17 — cœur, CLI, fiches, maquette
 
 - Cœur écrit depuis le gabarit : 13 constats, 19 fiches sourcées, scan sur un faux HOME.
